@@ -25,6 +25,7 @@ LDSHFLAGS=-shared -Wl,-Bsymbolic
 
 MYSQL_OBJ = pdb_mysql.o
 PGSQL_OBJ = pdb_pgsql.o
+SQL_OBJ = pdb_sql.o
 
 all: mysql.so pgsql.so
 
@@ -33,8 +34,8 @@ clean:
 
 .SUFFIXES: .po .c
 
-mysql.so: $(MYSQL_OBJ:.o=.po)
-	$(SHLD) $(LDSHFLAGS) -o $@ $(MYSQL_OBJ:.o=.po) -L/usr/lib -lmysqlclient -lz -lcrypt -lnsl -lm \
+mysql.so: $(MYSQL_OBJ:.o=.po) $(SQL_OBJ:.o=.po)
+	$(SHLD) $(LDSHFLAGS) -o $@ $(MYSQL_OBJ:.o=.po) $(SQL_OBJ:.o=.po) -L/usr/lib -lmysqlclient -lz -lcrypt -lnsl -lm \
 		-Wl,-soname=`basename $@`
 
 pgsql.so: $(PGSQL_OBJ:.o=.po)
