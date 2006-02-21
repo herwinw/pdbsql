@@ -1,0 +1,119 @@
+Creating the Database
+---------------------
+
+You can set up your own table and specify the field names to pdb_mysql or use 
+the default table. The file mysql.dump contains the correct queries to
+create the required tables. Use the command:
+
+# mysql -uusername -hhostname -ppassword \
+	databasename < /path/to/samba/examples/pdb/mysql/mysql.dump
+
+Configuring
+-----------
+
+This plug-in lacks some good documentation, but here is some brief 
+information. Add the following to the "passdb backend" variable in your 
+smb.conf file:
+
+[other-plugins] mysql:identifier [other-plugins]
+
+The identifier can be any string you like, as long as it does not collide with 
+the identifiers of other plugins or other instances of pdb_mysql. If you 
+specify multiple pdb_mysql.so entries in "passdb backend", you also need to 
+use different identifiers.
+
+Additional options can be given through the smb.conf file in the [global] section.
+
+Basic smb.conf Options for MySQL passdb Backend:
+Field			Contents
+mysql host		Host name, defaults to `localhost'
+mysql password
+mysql user		Defaults to `samba'
+mysql database	Defaults to `samba'
+mysql port		Defaults to 3306
+table			Name of the table containing the users
+
+WARNING:
+Since the password for the MySQL user is stored in the smb.conf file, you should make the smb.conf file 
+readable only to the user who runs Samba. This is considered a security bug and will soon be fixed.
+
+Names of the columns are given in MySQL field names for MySQL passdb backend.  The default column names can be found in the example table dump.
+
+MySQL field names for MySQL passdb backend:
+Field					Type	Contents
+logon time column		int(9)	UNIX timestamp of last logon of user
+logoff time column		int(9)	UNIX timestamp of last logoff of user
+kickoff time column		int(9)	UNIX timestamp of moment user should be kicked off workstation (not enforced)
+pass last set time column int(9)	UNIX timestamp of moment password was last set
+pass can change time column	int(9)	UNIX timestamp of moment from which password can be changed
+pass must change time column int(9)	UNIX timestamp of moment on which password must be changed
+username column	varchar(255)		UNIX username
+domain column	varchar(255)		NT domain user belongs to
+nt username column	varchar(255)	NT username
+fullname column	varchar(255)		Full name of user
+home dir column	varchar(255)		UNIX homedir path (equivalent of the "logon home" parameter.
+dir drive column	varchar(2)		Directory drive path (e.g., H:)
+logon script column	varchar(255)	Batch file to run on client side when logging on
+profile path column	varchar(255)	Path of profile
+acct desc column	varchar(255)	Some ASCII NT user data
+workstations column	varchar(255)	Workstations user can logon to (or NULL for all)
+unknown string column	varchar(255)	Unknown string
+munged dial column	varchar(255)	Unknown
+user sid column		varchar(255)	NT user SID
+group sid column	varchar(255)	NT group SID
+lanman pass column	varchar(255)	Encrypted lanman password
+nt pass column		varchar(255)	Encrypted nt passwd
+plain pass column	varchar(255)	Plaintext password
+acct ctrl column	int(9)			NT user data
+unknown 3 column	int(9)			Unknown
+logon divs column	int(9)			Unknown
+hours len column	int(9)			Unknown
+bad password count column	int(5)	Number of failed password tries before disabling an account
+logon count column	int(5)			Number of logon attempts
+unknown 6 column	int(9)			Unknown
+
+You can put a colon (:) after the name of each column, which 
+should specify the column to update when updating the table. You can also 
+specify nothing behind the colon, in which case the field data will not be 
+updated. Setting a column name to NULL means the field 
+should not be used.
+
+Example Configuration for the MySQL passdb Backend:
+[global]
+passdb backend = mysql:foo
+foo:mysql user = samba
+foo:mysql password = abmas
+foo:mysql database = samba
+# domain name is static and can't be changed
+foo:domain column = 'MYWORKGROUP':
+# The fullname column comes from several other columns
+foo:fullname column = CONCAT(firstname,' ',surname):
+# Samba should never write to the password columns
+foo:lanman pass column = lm_pass:
+foo:nt pass column = nt_pass:
+# The unknown 3 column is not stored
+foo:unknown 3 column = NULL
+
+Using Plaintext Passwords or Encrypted Password
+------------------------------------------------
+
+I strongly discourage the use of plaintext passwords; however, you can use them.
+
+If you would like to use plaintext passwords, set
+`identifier:lanman pass column' and `identifier:nt pass column' to
+`NULL' (without the quotes) and `identifier:plain pass column' to the
+name of the column containing the plaintext passwords. 
+
+If you use encrypted passwords, set the 'identifier:plain pass
+column' to 'NULL' (without the quotes). This is the default.
+
+Getting Non-Column Data from the Table
+--------------------------------------
+It is possible to have not all data in the database by making some "constant."
+
+For example, you can set `identifier:fullname column' to
+something like CONCAT(Firstname,' ',Surname)
+
+Or, set `identifier:workstations column' to: NULL.
+
+See the MySQL documentation for more language constructs.
