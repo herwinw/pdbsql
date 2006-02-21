@@ -128,7 +128,7 @@ static long PQgetlong( PGresult *r, long row, long col )
   return atol( PQgetvalue( r, row,  col ) ) ;
 }
 
-static NTSTATUS row_to_sam_account ( PGresult *r, long row, SAM_ACCOUNT *u )
+static NTSTATUS row_to_sam_account ( PGresult *r, long row, struct samu *u )
 {
   unsigned char *temp;
   DOM_SID sid ;
@@ -254,10 +254,10 @@ static void pgsqlsam_endsampwent(struct pdb_methods *methods)
 }
 
 /*****************************************************************
-  Get one SAM_ACCOUNT from the list (next in line)
+  Get one struct samu from the list (next in line)
  *****************************************************************/
 
-static NTSTATUS pgsqlsam_getsampwent( struct pdb_methods *methods, SAM_ACCOUNT *user )
+static NTSTATUS pgsqlsam_getsampwent( struct pdb_methods *methods, struct samu *user )
 {
   struct pdb_pgsql_data *data;
   NTSTATUS retval ;
@@ -276,7 +276,7 @@ static NTSTATUS pgsqlsam_getsampwent( struct pdb_methods *methods, SAM_ACCOUNT *
   return retval ;
 }
 
-static NTSTATUS pgsqlsam_select_by_field ( struct pdb_methods *methods, SAM_ACCOUNT *user, enum sql_search_field field, const char *sname )
+static NTSTATUS pgsqlsam_select_by_field ( struct pdb_methods *methods, struct samu *user, enum sql_search_field field, const char *sname )
 {
   struct pdb_pgsql_data *data ;
   PGconn *handle ;
@@ -291,7 +291,7 @@ static NTSTATUS pgsqlsam_select_by_field ( struct pdb_methods *methods, SAM_ACCO
 
   if ( user == NULL )
   {
-    DEBUG( 0, ("pdb_getsampwnam: SAM_ACCOUNT is NULL.\n") ) ;
+    DEBUG( 0, ("pdb_getsampwnam: struct samu is NULL.\n") ) ;
     return NT_STATUS_INVALID_PARAMETER;
   }
   
@@ -348,7 +348,7 @@ static NTSTATUS pgsqlsam_select_by_field ( struct pdb_methods *methods, SAM_ACCO
   Lookup a name in the SAM database
  ******************************************************************/
 
-static NTSTATUS pgsqlsam_getsampwnam ( struct pdb_methods *methods, SAM_ACCOUNT *user, const char *sname )
+static NTSTATUS pgsqlsam_getsampwnam ( struct pdb_methods *methods, struct samu *user, const char *sname )
 {
   struct pdb_pgsql_data *data;
   size_t i, l;
@@ -381,7 +381,7 @@ static NTSTATUS pgsqlsam_getsampwnam ( struct pdb_methods *methods, SAM_ACCOUNT 
   Search by sid
  **************************************************************************/
 
-static NTSTATUS pgsqlsam_getsampwsid ( struct pdb_methods *methods, SAM_ACCOUNT *user, const DOM_SID *sid )
+static NTSTATUS pgsqlsam_getsampwsid ( struct pdb_methods *methods, struct samu *user, const DOM_SID *sid )
 {
   struct pdb_pgsql_data *data;
   fstring sid_str;
@@ -394,10 +394,10 @@ static NTSTATUS pgsqlsam_getsampwsid ( struct pdb_methods *methods, SAM_ACCOUNT 
 }
 
 /***************************************************************************
-  Delete a SAM_ACCOUNT
+  Delete a struct samu
  ****************************************************************************/
 
-static NTSTATUS pgsqlsam_delete_sam_account( struct pdb_methods *methods, SAM_ACCOUNT *sam_pass )
+static NTSTATUS pgsqlsam_delete_sam_account( struct pdb_methods *methods, struct samu *sam_pass )
 {
   struct pdb_pgsql_data *data ;
   PGconn *handle ;
@@ -461,7 +461,7 @@ static NTSTATUS pgsqlsam_delete_sam_account( struct pdb_methods *methods, SAM_AC
   return retval ;
 }
 
-static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, const SAM_ACCOUNT *newpwd, char isupdate )
+static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, const struct samu *newpwd, char isupdate )
 {
   struct pdb_pgsql_data *data ;
   PGconn *handle ;
@@ -516,12 +516,12 @@ static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, const
   return retval;
 }
 
-static NTSTATUS pgsqlsam_add_sam_account ( struct pdb_methods *methods, SAM_ACCOUNT *newpwd )
+static NTSTATUS pgsqlsam_add_sam_account ( struct pdb_methods *methods, struct samu *newpwd )
 {
   return pgsqlsam_replace_sam_account( methods, newpwd, 0 ) ;
 }
 
-static NTSTATUS pgsqlsam_update_sam_account ( struct pdb_methods *methods, SAM_ACCOUNT *newpwd )
+static NTSTATUS pgsqlsam_update_sam_account ( struct pdb_methods *methods, struct samu *newpwd )
 {
   return pgsqlsam_replace_sam_account( methods, newpwd, 1 ) ;
 }

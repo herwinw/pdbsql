@@ -33,7 +33,7 @@ enum sql_search_field { SQL_SEARCH_NONE = 0, SQL_SEARCH_USER_SID = 1, SQL_SEARCH
 char *sql_escape_string(TALLOC_CTX *mem_ctx, const char *unesc);
 char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, BOOL update, enum sql_search_field field, const char *value);
 char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data, const char *esc) ;
-char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, const SAM_ACCOUNT *newpwd, char isupdate);
+char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, const struct samu *newpwd, char isupdate);
 BOOL sql_account_config_valid(const char *data);
 
 #endif /* _PDB_SQL_H */
