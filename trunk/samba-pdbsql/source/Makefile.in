@@ -1,0 +1,40 @@
+# Makefile for experimental pdb modules
+
+CC = @CC@
+INSTALL = @INSTALL@
+
+modules = @modules@
+
+SHLIBEXT = @SHLIBEXT@
+
+MYSQL_LIBS = @MYSQL_LIBS@
+PGSQL_LIBS = @PGSQL_LIBS@
+SOURCEDIR = @SOURCEDIR@
+LIBDIR = @LIBDIR@
+CFLAGS = @CFLAGS@ -I$(SOURCEDIR) -I$(SOURCEDIR)/include -I$(SOURCEDIR)/ubiqx
+
+all: $(addsuffix .$(SHLIBEXT), $(modules))
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< 
+
+mysql.$(SHLIBEXT): pdb_mysql.o pdb_sql.o
+	$(CC) -shared -o $@ $^ $(MYSQL_LIBS)
+
+pgsql.$(SHLIBEXT): pdb_pgsql.o pdb_sql.o
+	$(CC) -shared -o $@ $^ $(PGSQL_LIBS)
+
+Makefile: Makefile.in config.status
+	./config.status
+
+clean:
+	rm -f *.o *.$(SHLIBEXT)
+
+install:
+	$(INSTALL) -d $(LIBDIR)/passdb
+	$(INSTALL) -m 0755 $(addsuffix .$(SHLIBEXT), $(modules)) $(LIBDIR)/passdb
+
+distclean:
+	rm -rf autom4te.cache config.cache config.status
+	rm -f config.h Makefile config.log
+	rm -f *~

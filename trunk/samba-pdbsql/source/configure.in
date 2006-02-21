@@ -1,0 +1,67 @@
+AC_PREREQ(2.50)
+AC_INIT(pdb_mysql,[],[jelmer@samba.org])
+AC_CONFIG_SRCDIR([pdb_mysql.c])
+AC_CONFIG_HEADER(config.h)
+
+AC_PROG_CC
+AC_SUBST(CFLAGS)
+
+SHLIBEXT="so"
+AC_SUBST(SHLIBEXT)
+
+AC_PROG_INSTALL
+
+modules=""
+AC_SUBST(modules)
+AC_SUBST(SOURCEDIR)
+AC_SUBST(LIBDIR)
+
+AC_MSG_CHECKING(for Samba source directory)
+
+AC_ARG_WITH(samba-dir,
+[ --with-samba-dir      Path to Samba sources],
+[ 
+ SOURCEDIR="$withval"
+],
+[
+ 	if which smbd >/dev/null 2>/dev/null; then 
+		SOURCEDIR="smbd -b | grep SRCDIR | cut -d : -f 2"
+		LIBDIR="smbd -b | grep LIBDIR | cut -d : -f 2"
+	else 
+		AC_MSG_ERROR([smbd not found, please specify --with-samba-dir])
+	fi
+])
+
+if test -f "$SOURCEDIR/source/dynconfig.c"; then
+ 	SOURCEDIR="$SOURCEDIR/source"
+else if test -f "$SOURCEDIR/dynconfig.c"; then
+	SOURCEDIR="$SOURCEDIR"
+     else 
+	AC_MSG_ERROR([Unable to find Samba sources in $SOURCEDIR. Please specify correct value to --with-samba-dir=])
+  fi
+fi
+
+if test -z "$LIBDIR"; then
+	prefix=`grep "^prefix=" $SOURCEDIR/Makefile | cut -d = -f 2`
+	LIBDIR="$prefix/lib"
+fi
+
+AC_MSG_RESULT([$SOURCEDIR])
+
+## pdb_mysql
+AM_PATH_MYSQL(
+[modules="$modules mysql";
+ CFLAGS="$CFLAGS $MYSQL_CFLAGS"
+ ],[
+ AC_MSG_WARN([Can't find MySQL libraries, not building pdb_mysql])
+])
+
+## pdb_pgsql
+AM_PATH_PGSQL(
+[modules="$modules pgsql";
+ CFLAGS="$CFLAGS $PGSQL_CFLAGS"
+],[
+ AC_MSG_WARN([Can't find PostGreSQL libraries, not building pdb_pgsql])
+])
+
+AC_OUTPUT(Makefile)
