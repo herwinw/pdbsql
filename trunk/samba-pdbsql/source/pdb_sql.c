@@ -291,7 +291,7 @@ char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data, const char
 	return query;
 }
 
-char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, const SAM_ACCOUNT *newpwd, char isupdate)
+char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, const struct samu *newpwd, char isupdate)
 {
 	char *ret;
 	pstring temp;
