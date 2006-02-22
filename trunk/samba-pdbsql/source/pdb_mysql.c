@@ -20,6 +20,8 @@
 #include "pdb_sql.h"
 #include <mysql/mysql.h>
 
+#define pdb_mysql_init init_module
+
 #define CONFIG_HOST_DEFAULT				"localhost"
 #define CONFIG_USER_DEFAULT				"samba"
 #define CONFIG_PASS_DEFAULT				""
@@ -421,6 +423,7 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
+	DEBUG(10, ("initializing mysql plugin"));
 	NTSTATUS nt_status;
 	struct pdb_mysql_data *data;
 
@@ -493,7 +496,6 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 
 NTSTATUS pdb_mysql_init(void) 
 {
-	DEBUG(10, ("Loading MySQL Plugin"));
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "mysql", mysqlsam_init);
 }
 
