@@ -2,15 +2,17 @@ Installation
 ------------
 If you are running out of CVS, run ./autogen.sh to create configure.
 
-Now run:
+You will need to download the Samba source tree. Run:
 
-./configure --with-samba-dir=$SOURCEDIR
-
-where $SOURCEDIR is the path to a copy of the Samba sources.
+$ cd $SAMBADIR/source
+$ ./configure
+$ make proto
+$ cd $PDBSQLDIR
+$ ./configure --with-samba-dir=$SAMBADIR
+$ make
+$ make install 
 
 Run ./configure --help for a list of additional options.
-
-Run "make && make install" to install.
 
 Configuration
 -------------
