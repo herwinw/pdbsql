@@ -69,8 +69,10 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 
 	num_fields = mysql_num_fields(r);
 	row = mysql_fetch_row(r);
-	if (!row)
+	if (!row) {
+		DEBUG(10, ("empty result"));
 		return NT_STATUS_INVALID_PARAMETER;
+	}
 
 	pdb_set_logon_time(u, xatol(row[0]), PDB_SET);
 	pdb_set_logoff_time(u, xatol(row[1]), PDB_SET);
@@ -264,6 +266,7 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 	mysql_free_result(res);
 	talloc_free(mem_ctx);
 
+	DEBUG(10, ("hier\n"));
 	return ret;
 }
 
@@ -423,7 +426,6 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
-	DEBUG(10, ("initializing mysql plugin"));
 	NTSTATUS nt_status;
 	struct pdb_mysql_data *data;
 
@@ -434,7 +436,10 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 			  ("mysqlsam: Couldn't register custom debugging class!\n"));
 	}
 
-
+        if ( !NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method )) ) {
+		return nt_status;
+        }
+	
 	(*pdb_method)->name = "mysqlsam";
 
 	(*pdb_method)->setsampwent = mysqlsam_setsampwent;
@@ -446,6 +451,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
 
+	data = talloc(*pdb_method, struct pdb_mysql_data);
 	(*pdb_method)->private_data = data;
 	data->handle = NULL;
 	data->pwent = NULL;

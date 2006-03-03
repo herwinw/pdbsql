@@ -31,7 +31,7 @@ clean:
 	rm -f *.o *.$(SHLIBEXT)
 
 install:
-	$(INSTALL) -d $(LIBDIR)/passdb
+	$(INSTALL) -d $(LIBDIR)/pdb
 	$(INSTALL) -m 0755 $(addsuffix .$(SHLIBEXT), $(modules)) $(LIBDIR)/pdb
 
 distclean:
