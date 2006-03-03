@@ -11,7 +11,7 @@ $ cd $PDBSQLDIR
 $ ./configure --with-samba-dir=$SAMBADIR
 $ make
 $ make install 
- 
+
 Run ./configure --help for a list of additional options.
 
 Configuration
