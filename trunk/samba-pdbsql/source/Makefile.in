@@ -16,7 +16,7 @@ CFLAGS = @CFLAGS@ -I$(SOURCEDIR) -I$(SOURCEDIR)/include -I$(SOURCEDIR)/ubiqx -I$
 all: $(addsuffix .$(SHLIBEXT), $(modules))
 
 .c.o:
-	$(CC) $(CFLAGS) -c $< 
+	$(CC) $(CFLAGS) -fPIC -c $< 
 
 mysql.$(SHLIBEXT): pdb_mysql.o pdb_sql.o
 	$(CC) -shared -o $@ $^ $(MYSQL_LIBS)
