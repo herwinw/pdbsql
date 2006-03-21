@@ -19,6 +19,7 @@
 
 #include "pdb_sql.h"
 #include <mysql/mysql.h>
+#include <mysql/errmsg.h>
 
 #define pdb_mysql_init init_module
 
@@ -60,10 +61,30 @@ static long xatol(const char *d)
 	return atol(d);
 }
 
+static NTSTATUS pdb_mysql_connect(struct pdb_mysql_data *data) {
+	/* Process correct entry in $HOME/.my.conf */
+	if (!mysql_real_connect(data->handle,
+			config_value(data, "mysql host", CONFIG_HOST_DEFAULT),
+			config_value(data, "mysql user", CONFIG_USER_DEFAULT),
+			config_value(data, "mysql password", CONFIG_PASS_DEFAULT),
+			config_value(data, "mysql database", CONFIG_DB_DEFAULT),
+			xatol(config_value (data, "mysql port", CONFIG_PORT_DEFAULT)), 
+			NULL, 0)) {
+		DEBUG(0,
+			  ("Failed to connect to mysql database: error: %s\n",
+			   mysql_error(data->handle)));
+		return NT_STATUS_UNSUCCESSFUL;
+	}
+	
+	DEBUG(5, ("Connected to mysql db\n"));
+	
+	return NT_STATUS_OK;
+}
+
 static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 {
 	MYSQL_ROW row;
-	unsigned char *temp;
+	unsigned char pwd[16];
 	unsigned int num_fields;
 	DOM_SID sid;
 
@@ -104,10 +125,10 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 		pdb_set_group_sid(u, &sid, PDB_SET);
 	}
 
-	if (pdb_gethexpwd(row[20], temp))
-		pdb_set_lanman_passwd(u, temp, PDB_SET);
-	if (pdb_gethexpwd(row[21], temp))
-		pdb_set_nt_passwd(u, temp, PDB_SET);
+	if (pdb_gethexpwd(row[20], pwd))
+		pdb_set_lanman_passwd(u, pwd, PDB_SET);
+	if (pdb_gethexpwd(row[21], pwd))
+		pdb_set_nt_passwd(u, pwd, PDB_SET);
 
 	/* Only use plaintext password storage when lanman and nt are
 	 * NOT used */
@@ -124,12 +145,12 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 	return NT_STATUS_OK;
 }
 
-static NTSTATUS mysqlsam_setsampwent(struct pdb_methods *methods, BOOL update, uint16 acb_mask)
+static NTSTATUS mysqlsam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
 {
 	struct pdb_mysql_data *data =
 		(struct pdb_mysql_data *) methods->private_data;
 	char *query;
-	int ret;
+	int mysql_ret;
 
 	if (!data || !(data->handle)) {
 		DEBUG(0, ("invalid handle!\n"));
@@ -138,10 +159,25 @@ static NTSTATUS mysqlsam_setsampwent(struct pdb_methods *methods, BOOL update, u
 
 	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
 
-	ret = mysql_query(data->handle, query);
+	mysql_ret = mysql_query(data->handle, query);
+	
+	/* [SYN] If the server has gone away, reconnect and retry */
+	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
+		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+
+		/* [SYN] Reconnect */
+		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+			talloc_free(query);
+			return NT_STATUS_UNSUCCESSFUL;
+		}
+		/* [SYN] Retry */
+		mysql_ret = mysql_query(data->handle, query);
+	}
+	
 	talloc_free(query);
 
-	if (ret) {
+	if (mysql_ret) {
 		DEBUG(0,
 			   ("Error executing MySQL query %s\n", mysql_error(data->handle)));
 		return NT_STATUS_UNSUCCESSFUL;
@@ -244,6 +280,20 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 	
 	mysql_ret = mysql_query(data->handle, query);
 	
+	/* [SYN] If the server has gone away, reconnect and retry */
+	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
+		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+
+		/* [SYN] Reconnect */
+		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+			talloc_free(query);
+			return NT_STATUS_UNSUCCESSFUL;
+		}
+		/* [SYN] Retry */
+		mysql_ret = mysql_query(data->handle, query);
+	}
+	
 	talloc_free(query);
 	
 	if (mysql_ret) {
@@ -266,7 +316,6 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 	mysql_free_result(res);
 	talloc_free(mem_ctx);
 
-	DEBUG(10, ("hier\n"));
 	return ret;
 }
 
@@ -318,7 +367,7 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 	const char *sname = pdb_get_username(sam_pass);
 	char *esc;
 	char *query;
-	int ret;
+	int mysql_ret;
 	struct pdb_mysql_data *data;
 	char *tmp_sname;
 	TALLOC_CTX *mem_ctx;
@@ -360,11 +409,25 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 
 	talloc_free(esc);
 
-	ret = mysql_query(data->handle, query);
+	mysql_ret = mysql_query(data->handle, query);
+	
+	/* [SYN] If the server has gone away, reconnect and retry */
+	if (mysql_ret && mysql_ernno(data->handle) == CR_SERVER_GONE_ERROR) {
+		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+
+		/* [SYN] Reconnect */
+		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+			talloc_free(query);
+			return NT_STATUS_UNSUCCESSFUL;
+		}
+		/* [SYN] Retry */
+		mysql_ret = mysql_query(data->handle, query);
+	}
 
 	talloc_free(query);
 
-	if (ret) {
+	if (mysql_ret) {
 		DEBUG(0,
 			  ("Error while executing query: %s\n",
 			   mysql_error(data->handle)));
@@ -382,6 +445,7 @@ static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
 {
 	struct pdb_mysql_data *data;
 	char *query;
+	int mysql_ret;
 
 	if (!methods) {
 		DEBUG(0, ("invalid methods!\n"));
@@ -400,7 +464,23 @@ static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
  		return NT_STATUS_OK;
 	
 	/* Execute the query */
-	if (mysql_query(data->handle, query)) {
+	mysql_ret = mysql_query(data->handle, query);
+	
+	/* [SYN] If the server has gone away, reconnect and retry */
+	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
+		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+
+		/* [SYN] Reconnect */
+		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+			talloc_free(query);
+			return NT_STATUS_UNSUCCESSFUL;
+		}
+		/* [SYN] Retry */
+		mysql_ret = mysql_query(data->handle, query);
+	}
+	
+	if (mysql_ret) {
 		DEBUG(0,
 			  ("Error executing %s, %s\n", query,
 			   mysql_error(data->handle)));
@@ -422,6 +502,10 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 							struct samu * newpwd)
 {
 	return mysqlsam_replace_sam_account(methods, newpwd, 1);
+}
+
+static BOOL mysqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
+	return False;
 }
 
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
@@ -450,7 +534,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
-
+	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm;
 	data = talloc(*pdb_method, struct pdb_mysql_data);
 	(*pdb_method)->private_data = data;
 	data->handle = NULL;
@@ -481,21 +565,9 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 		return NT_STATUS_INVALID_PARAMETER;
 	}
 	
-	/* Process correct entry in $HOME/.my.conf */
-	if (!mysql_real_connect(data->handle,
-			config_value(data, "mysql host", CONFIG_HOST_DEFAULT),
-			config_value(data, "mysql user", CONFIG_USER_DEFAULT),
-			config_value(data, "mysql password", CONFIG_PASS_DEFAULT),
-			config_value(data, "mysql database", CONFIG_DB_DEFAULT),
-			xatol(config_value (data, "mysql port", CONFIG_PORT_DEFAULT)), 
-			NULL, 0)) {
-		DEBUG(0,
-			  ("Failed to connect to mysql database: error: %s\n",
-			   mysql_error(data->handle)));
+	if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
 		return NT_STATUS_UNSUCCESSFUL;
 	}
-	
-	DEBUG(5, ("Connected to mysql db\n"));
 
 	return NT_STATUS_OK;
 }
