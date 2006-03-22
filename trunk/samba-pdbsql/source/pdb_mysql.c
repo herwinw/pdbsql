@@ -62,7 +62,7 @@ static long xatol(const char *d)
 }
 
 static NTSTATUS pdb_mysql_connect(struct pdb_mysql_data *data) {
-	/* Process correct entry in $HOME/.my.conf */
+	/* Connect to mysql database */
 	if (!mysql_real_connect(data->handle,
 			config_value(data, "mysql host", CONFIG_HOST_DEFAULT),
 			config_value(data, "mysql user", CONFIG_USER_DEFAULT),
@@ -507,6 +507,10 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 static BOOL mysqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
 	return False;
 }
+static BOOL mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
+	*rid = 0;
+	return True;
+}
 
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
@@ -535,6 +539,8 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
 	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm;
+	(*pdb_method)->new_rid = mysqlsam_new_rid;
+	
 	data = talloc(*pdb_method, struct pdb_mysql_data);
 	(*pdb_method)->private_data = data;
 	data->handle = NULL;
