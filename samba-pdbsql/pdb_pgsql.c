@@ -2,6 +2,7 @@
  * PostgresSQL password backend for samba
  * Copyright (C) Hamish Friedlander 2003
  * Copyright (C) Jelmer Vernooij 2004
+ * Copyright (C) Wilco Baan Hofman 2006
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
@@ -24,7 +25,7 @@
 #define CONFIG_HOST_DEFAULT				"localhost"
 #define CONFIG_USER_DEFAULT				"samba"
 #define CONFIG_PASS_DEFAULT				""
-#define CONFIG_PORT_DEFAULT				"5432"
+#define CONFIG_PORT_DEFAULT				"5433"
 #define CONFIG_DB_DEFAULT				"samba"
 
 /* handles for doing db transactions */
@@ -526,63 +527,72 @@ static NTSTATUS pgsqlsam_update_sam_account ( struct pdb_methods *methods, struc
   return pgsqlsam_replace_sam_account( methods, newpwd, 1 ) ;
 }
 
-static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location )
-{
-  struct pdb_pgsql_data *data = malloc_p(struct pdb_pgsql_data);
-  
-  (*pdb_method)->name               = "pgsqlsam";
-  
-  (*pdb_method)->setsampwent        = pgsqlsam_setsampwent;
-  (*pdb_method)->endsampwent        = pgsqlsam_endsampwent;
-  (*pdb_method)->getsampwent        = pgsqlsam_getsampwent;
-  (*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
-  (*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
-  (*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
-  (*pdb_method)->update_sam_account = pgsqlsam_update_sam_account;
-  (*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
-  
-  (*pdb_method)->private_data = data;
-
-  data->master_handle = NULL;
-  data->handle = NULL;
-  data->pwent  = NULL ;
-
-  if ( !location )
-  {
-    DEBUG( 0, ("No identifier specified. Check the Samba HOWTO Collection for details\n") ) ;
-    return NT_STATUS_INVALID_PARAMETER;
-  }
-
-  data->location = smb_xstrdup( location ) ;
-
-  if(!sql_account_config_valid(data->location)) {
-          return NT_STATUS_INVALID_PARAMETER;
-  }
-
-  DEBUG
-  (
-    1,
-    (
-	"Database server parameters: host: %s, user: %s, password: XXXX, database: %s, port: %s\n",
-	config_value( data, "pgsql host"    , CONFIG_HOST_DEFAULT ),
-	config_value( data, "pgsql user"    , CONFIG_USER_DEFAULT ),
-	config_value( data, "pgsql database", CONFIG_DB_DEFAULT   ),
-	config_value( data, "pgsql port"    , CONFIG_PORT_DEFAULT )
-    )
-  ) ;
-
-  /* Save the parameters. */
-  data->db   = config_value( data, "pgsql database", CONFIG_DB_DEFAULT   );
-  data->host = config_value( data, "pgsql host"    , CONFIG_HOST_DEFAULT );
-  data->port = config_value( data, "pgsql port"    , CONFIG_PORT_DEFAULT );
-  data->user = config_value( data, "pgsql user"    , CONFIG_USER_DEFAULT );
-  data->pass = config_value( data, "pgsql password", CONFIG_PASS_DEFAULT );
-
-  DEBUG( 5, ("Pgsql module intialized\n") ) ;
-  return NT_STATUS_OK;
+static BOOL pgsqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
+	return False;
+}
+static BOOL pgsqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
+	*rid = 0;
+	return True;
 }
 
-NTSTATUS init_module(void) 
+static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location )
 {
-  return smb_register_passdb( PASSDB_INTERFACE_VERSION, "pgsql", pgsqlsam_init ) ;
+	NTSTATUS nt_status;
+	struct pdb_pgsql_data *data = malloc_p(struct pdb_pgsql_data);
+	
+	if ( !NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method )) ) {
+		return nt_status;
+        }
+  
+	(*pdb_method)->name               = "pgsqlsam";
+  
+	(*pdb_method)->setsampwent        = pgsqlsam_setsampwent;
+	(*pdb_method)->endsampwent        = pgsqlsam_endsampwent;
+	(*pdb_method)->getsampwent        = pgsqlsam_getsampwent;
+	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
+	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
+	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
+	(*pdb_method)->update_sam_account = pgsqlsam_update_sam_account;
+	(*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
+	(*pdb_method)->rid_algorithm      = pgsqlsam_rid_algorithm;
+	(*pdb_method)->new_rid            = pgsqlsam_new_rid;
+  
+  
+	(*pdb_method)->private_data = data;
+
+	data->master_handle = NULL;
+	data->handle = NULL;
+	data->pwent  = NULL ;
+
+	if ( !location ) {
+		DEBUG( 0, ("No identifier specified. Check the Samba HOWTO Collection for details\n") ) ;
+		return NT_STATUS_INVALID_PARAMETER;
+	}
+
+	data->location = smb_xstrdup( location ) ;
+
+	if(!sql_account_config_valid(data->location)) {
+		return NT_STATUS_INVALID_PARAMETER;
+	}
+
+	DEBUG(1, ( "Database server parameters: host: %s, user: %s, password: XXXX, database: %s, port: %s\n",
+			config_value( data, "pgsql host"    , CONFIG_HOST_DEFAULT ),
+			config_value( data, "pgsql user"    , CONFIG_USER_DEFAULT ),
+			config_value( data, "pgsql database", CONFIG_DB_DEFAULT   ),
+			config_value( data, "pgsql port"    , CONFIG_PORT_DEFAULT )));
+
+	/* Save the parameters. */
+	data->db   = config_value( data, "pgsql database", CONFIG_DB_DEFAULT   );
+	data->host = config_value( data, "pgsql host"    , CONFIG_HOST_DEFAULT );
+	data->port = config_value( data, "pgsql port"    , CONFIG_PORT_DEFAULT );
+	data->user = config_value( data, "pgsql user"    , CONFIG_USER_DEFAULT );
+	data->pass = config_value( data, "pgsql password", CONFIG_PASS_DEFAULT );
+
+	DEBUG( 5, ("Pgsql module intialized\n") ) ;
+	return NT_STATUS_OK;
+}
+
+NTSTATUS init_module(void)
+{
+	return smb_register_passdb( PASSDB_INTERFACE_VERSION, "pgsql", pgsqlsam_init ) ;
 }
