@@ -4,8 +4,8 @@ build: build-stamp
 
 build-stamp:
 	dh_testdir
-	cd source && ./configure --prefix=/usr 
-	$(MAKE) -C source
+	./configure --prefix=/usr --with-samba-dir=$(SAMBADIR)
+	$(MAKE) 
 	touch build-stamp
 
 clean:
@@ -13,9 +13,8 @@ clean:
 	dh_testroot
 	
 	dh_clean
-	-$(MAKE) -C source distclean
-
-binary-indep: build
+	-$(MAKE) distclean
+	rm -f build-stamp
 
 binary-arch: build
 	dh_testdir
@@ -23,11 +22,11 @@ binary-arch: build
 	
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) -C source install DESTDIR=`pwd`/debian/pdbsql
-	dh_strip
-	dh_installdocs -a
+	$(MAKE) install DESTDIR=`pwd`/debian/tmp LIBDIR=/usr/lib/samba
+	dh_install --sourcedir=`pwd`/debian/tmp
+	dh_installdocs -a docs/README docs/pdb_mysql.xml
 	dh_installchangelogs -a 
-	dh_installexamples -a docs/smb.conf.mysql
+	dh_installexamples -a docs/smb.conf.mysql docs/mysql.dump
 	dh_installman -a
 	dh_compress -a
 	dh_fixperms -a
@@ -37,6 +36,6 @@ binary-arch: build
 	dh_md5sums -a
 	dh_builddeb -a
 
-binary: binary-indep binary-arch
+binary: binary-arch
 
-.PHONY: build clean binary-arch binary-indep binary
+.PHONY: build clean binary-arch binary
