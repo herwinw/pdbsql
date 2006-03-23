@@ -2,21 +2,19 @@ Source: samba-pdbsql
 Section: net
 Priority: optional
 Maintainer: Jelmer Vernooij <jelmer@samba.org>
-Standards-Version: 3.5.8
+Standards-Version: 3.6.2
 Build-Depends: libmysqlclient15-dev, libpq-dev, debhelper (>> 4.0.0)
 
-Package: libsamba-pdb-mysql
+Package: samba-pdb-mysql
 Architecture: any
 Depends: ${shlibs:Depends}, samba
-Suggests: ${shlibs:Suggests}
 Description: MySQL user database support for Samba
  This package adds support for storing Samba user information 
  in MySQL.
 
-Package: libsamba-pdb-pqsql
+Package: samba-pdb-pgsql
 Architecture: any
 Depends: ${shlibs:Depends}, samba
-Suggests: ${shlibs:Suggests}
 Description: PostGreSQL user database support for Samba
  This package adds support for storing Samba user information 
  in PostGreSQL.
