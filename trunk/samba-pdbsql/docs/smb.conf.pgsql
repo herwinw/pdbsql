@@ -10,3 +10,4 @@ pgsql:pgsql user = samba
 pgsql:pgsql password = ambas
 pgsql:pgsql database = samba
 pgsql:pgsql port = 5433
+pgsql:table = users
