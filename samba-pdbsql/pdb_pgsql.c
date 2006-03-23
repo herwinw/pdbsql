@@ -1,7 +1,7 @@
 /*
  * PostgresSQL password backend for samba
  * Copyright (C) Hamish Friedlander 2003
- * Copyright (C) Jelmer Vernooij 2004
+ * Copyright (C) Jelmer Vernooij 2004-2006
  * Copyright (C) Wilco Baan Hofman 2006
  * 
  * This program is free software; you can redistribute it and/or modify it under
@@ -22,10 +22,18 @@
 #include "pdb_sql.h"
 #include <libpq-fe.h>
 
+/* To prevent duplicate defines */
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_VERSION
+#undef PACKAGE_TARNAME
+#include <pg_config.h>
+
 #define CONFIG_HOST_DEFAULT				"localhost"
 #define CONFIG_USER_DEFAULT				"samba"
 #define CONFIG_PASS_DEFAULT				""
-#define CONFIG_PORT_DEFAULT				"5433"
+#define CONFIG_PORT_DEFAULT				DEF_PGPORT_STR
 #define CONFIG_DB_DEFAULT				"samba"
 
 /* handles for doing db transactions */
@@ -588,7 +596,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	data->user = config_value( data, "pgsql user"    , CONFIG_USER_DEFAULT );
 	data->pass = config_value( data, "pgsql password", CONFIG_PASS_DEFAULT );
 
-	DEBUG( 5, ("Pgsql module intialized\n") ) ;
+	DEBUG( 5, ("Pgsql module initialized\n") ) ;
 	return NT_STATUS_OK;
 }
 
