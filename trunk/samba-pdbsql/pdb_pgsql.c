@@ -130,7 +130,7 @@ static long PQgetlong( PGresult *r, long row, long col )
 
 static NTSTATUS row_to_sam_account ( PGresult *r, long row, struct samu *u )
 {
-  unsigned char *temp;
+  unsigned char temp[16];
   DOM_SID sid ;
   unsigned char *hours ;
   size_t hours_len = 0 ;
@@ -189,7 +189,7 @@ static NTSTATUS row_to_sam_account ( PGresult *r, long row, struct samu *u )
   return NT_STATUS_OK ;
 }
 
-static NTSTATUS pgsqlsam_setsampwent(struct pdb_methods *methods, BOOL update, uint16 acb_mask)
+static NTSTATUS pgsqlsam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
 {
   struct pdb_pgsql_data *data ;
   PGconn *handle ;
@@ -464,7 +464,7 @@ static NTSTATUS pgsqlsam_delete_sam_account( struct pdb_methods *methods, struct
 static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, const struct samu *newpwd, char isupdate )
 {
   struct pdb_pgsql_data *data ;
-  PGconn *handle ;
+  PGconn *handle;
   char *query;
   PGresult *result ;
   NTSTATUS retval ;
@@ -477,7 +477,7 @@ static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, const
   
   data = (struct pdb_pgsql_data *) methods->private_data ;
   
-  if ( data == NULL || handle == NULL )
+  if ( data == NULL )
   {
     DEBUG( 0, ("invalid handle!\n") ) ;
     return NT_STATUS_INVALID_HANDLE ;
@@ -528,21 +528,20 @@ static NTSTATUS pgsqlsam_update_sam_account ( struct pdb_methods *methods, struc
 
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location )
 {
-  NTSTATUS nt_status ;
-  struct pdb_pgsql_data *data ;
+  struct pdb_pgsql_data *data = malloc_p(struct pdb_pgsql_data);
   
-  (*pdb_method)->name               = "pgsqlsam" ;
+  (*pdb_method)->name               = "pgsqlsam";
   
-  (*pdb_method)->setsampwent        = pgsqlsam_setsampwent ;
-  (*pdb_method)->endsampwent        = pgsqlsam_endsampwent ;
-  (*pdb_method)->getsampwent        = pgsqlsam_getsampwent ;
-  (*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam ;
-  (*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid ;
-  (*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account ;
-  (*pdb_method)->update_sam_account = pgsqlsam_update_sam_account ;
-  (*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account ;
+  (*pdb_method)->setsampwent        = pgsqlsam_setsampwent;
+  (*pdb_method)->endsampwent        = pgsqlsam_endsampwent;
+  (*pdb_method)->getsampwent        = pgsqlsam_getsampwent;
+  (*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
+  (*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
+  (*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
+  (*pdb_method)->update_sam_account = pgsqlsam_update_sam_account;
+  (*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
   
-  (*pdb_method)->private_data = data ;
+  (*pdb_method)->private_data = data;
 
   data->master_handle = NULL;
   data->handle = NULL;
