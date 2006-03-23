@@ -26,7 +26,7 @@ binary-arch: build
 	dh_install --sourcedir=`pwd`/debian/tmp
 	dh_installdocs -a docs/README docs/pdb_mysql.xml
 	dh_installchangelogs -a 
-	dh_installexamples -a docs/smb.conf.mysql docs/mysql.dump
+	dh_installexamples -a docs/smb.conf.mysql docs/mysql.dump docs/smb.conf.pgsql docs/pgsql.dump
 	dh_installman -a
 	dh_compress -a
 	dh_fixperms -a
