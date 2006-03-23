@@ -442,7 +442,7 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 }
 
 static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
-							 const struct samu * newpwd, char isupdate)
+							 struct samu * newpwd, char isupdate)
 {
 	struct pdb_mysql_data *data;
 	char *query;

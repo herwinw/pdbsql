@@ -461,7 +461,7 @@ static NTSTATUS pgsqlsam_delete_sam_account( struct pdb_methods *methods, struct
   return retval ;
 }
 
-static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, const struct samu *newpwd, char isupdate )
+static NTSTATUS pgsqlsam_replace_sam_account( struct pdb_methods *methods, struct samu *newpwd, char isupdate )
 {
   struct pdb_pgsql_data *data ;
   PGconn *handle;

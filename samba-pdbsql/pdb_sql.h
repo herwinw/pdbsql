@@ -39,7 +39,7 @@ char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data,
 			           const char *esc);
 
 char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, 
-		                   const struct samu *newpwd, char isupdate);
+		                   struct samu *newpwd, char isupdate);
 
 BOOL sql_account_config_valid(const char *data);
 
