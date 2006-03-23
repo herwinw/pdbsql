@@ -413,7 +413,7 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 	mysql_ret = mysql_query(data->handle, query);
 	
 	/* [SYN] If the server has gone away, reconnect and retry */
-	if (mysql_ret && mysql_ernno(data->handle) == CR_SERVER_GONE_ERROR) {
+	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
 		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
 
 		/* [SYN] Reconnect */
