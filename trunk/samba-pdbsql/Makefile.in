@@ -34,7 +34,7 @@ install:
 	$(INSTALL) -d $(LIBDIR)/pdb
 	$(INSTALL) -m 0755 $(addsuffix .$(SHLIBEXT), $(modules)) $(LIBDIR)/pdb
 
-distclean:
+distclean: clean
 	rm -rf autom4te.cache config.cache config.status
 	rm -f config.h Makefile config.log
 	rm -f *~

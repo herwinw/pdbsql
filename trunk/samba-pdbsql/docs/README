@@ -1,6 +1,6 @@
 Installation
 ------------
-If you are running out of CVS, run ./autogen.sh to create configure.
+If you are running out of Subversion, run ./autogen.sh to create configure.
 
 You will need to download the Samba source tree. Run:
 
@@ -16,5 +16,4 @@ Run ./configure --help for a list of additional options.
 
 Configuration
 -------------
-See the Samba HOWTO Collection and the other README files in this directory for 
-details.
+See the other README files in this directory for details.
