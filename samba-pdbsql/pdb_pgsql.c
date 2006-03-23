@@ -582,7 +582,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
   return NT_STATUS_OK;
 }
 
-NTSTATUS pdb_pgsql_init(void) 
+NTSTATUS init_module(void) 
 {
   return smb_register_passdb( PASSDB_INTERFACE_VERSION, "pgsql", pgsqlsam_init ) ;
 }
