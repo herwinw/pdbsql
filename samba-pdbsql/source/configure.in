@@ -24,9 +24,9 @@ AC_ARG_WITH(samba-dir,
  SOURCEDIR="$withval"
 ],
 [
- 	if which smbd >/dev/null 2>/dev/null; then 
-		SOURCEDIR="smbd -b | grep SRCDIR | cut -d : -f 2"
-		LIBDIR="smbd -b | grep LIBDIR | cut -d : -f 2"
+	if which smbd >/dev/null 2>/dev/null; then 
+		SOURCEDIR="`smbd -b | grep SRCDIR | cut -d : -f 2|awk '{ print $1; }'`"
+		LIBDIR="`smbd -b | grep LIBDIR | cut -d : -f 2|awk '{ print $1; }'`"
 	else 
 		AC_MSG_ERROR([smbd not found, please specify --with-samba-dir])
 	fi
