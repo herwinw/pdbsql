@@ -1,6 +1,7 @@
 /*
  * MySQL password backend for samba
  * Copyright (C) Jelmer Vernooij 2002-2004
+ * Copyright (C) Wilco Baan Hofman 2006
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
@@ -18,8 +19,8 @@
  */
 
 #include "pdb_sql.h"
-#include <mysql/mysql.h>
-#include <mysql/errmsg.h>
+#include <mysql.h>
+#include <errmsg.h>
 
 #define pdb_mysql_init init_module
 
