@@ -31,8 +31,8 @@ clean:
 	rm -f *.o *.$(SHLIBEXT)
 
 install:
-	$(INSTALL) -d $(LIBDIR)/pdb
-	$(INSTALL) -m 0755 $(addsuffix .$(SHLIBEXT), $(modules)) $(LIBDIR)/pdb
+	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/pdb
+	$(INSTALL) -m 0755 $(addsuffix .$(SHLIBEXT), $(modules)) $(DESTDIR)$(LIBDIR)/pdb
 
 distclean: clean
 	rm -rf autom4te.cache config.cache config.status
