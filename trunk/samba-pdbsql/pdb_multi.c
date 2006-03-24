@@ -297,8 +297,22 @@ static NTSTATUS multisam_alias_memberships(struct pdb_methods *methods,
 
 static NTSTATUS multisam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
+	short i;
+	struct multisam_data *data;
+	NTSTATUS ret;
+
+	SET_DATA(data, methods);
+	
+	DEBUG(1, ("Setsampwent executing..\n"));
+
+	for (i = 0; i < data->num_backends; i++) {
+		ret = data->methods[i]->setsampwent(data->methods[i], update, acb_mask);
+		if (!NT_STATUS_IS_OK(ret)) {
+			return ret;
+		}
+	}
+	
+	return NT_STATUS_OK;
 }
 
 /***************************************************************
@@ -307,7 +321,18 @@ static NTSTATUS multisam_setsampwent(struct pdb_methods *methods, BOOL update, u
 
 static void multisam_endsampwent(struct pdb_methods *methods)
 {
+	short i;
+	struct multisam_data *data;
 
+	if (!methods) return;
+	data = (struct multisam_data *)methods->private_data;
+	if (!data) return;
+
+	DEBUG(1, ("Freeing pwent results on multisam backends\n"));
+	
+	for (i = 0; i < data->num_backends; i++) {
+		data->methods[i]->endsampwent(data->methods[i]);
+	}
 }
 
 /*****************************************************************
@@ -316,8 +341,20 @@ static void multisam_endsampwent(struct pdb_methods *methods)
 
 static NTSTATUS multisam_getsampwent(struct pdb_methods *methods, struct samu * user)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
+	short i;
+	struct multisam_data *data;
+	NTSTATUS ret;
+	
+	SET_DATA(data, methods);
+	
+	for (i = 0; i < data->num_backends; i++) {
+		ret = data->methods[i]->getsampwent(data->methods[i], user);
+		if (NT_STATUS_IS_OK(ret)) {
+			return ret;
+		}
+	}
+	
+	return NT_STATUS_INVALID_PARAMETER;
 }
 
 /******************************************************************
@@ -374,28 +411,39 @@ static NTSTATUS multisam_getsampwsid(struct pdb_methods *methods, struct samu * 
 static NTSTATUS multisam_delete_sam_account(struct pdb_methods *methods,
 							struct samu * sam_pass)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
-}
+	short i;
+	struct multisam_data *data;
 
-static NTSTATUS multisam_replace_sam_account(struct pdb_methods *methods,
-							 struct samu * newpwd, char isupdate)
-{
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
+	SET_DATA(data, methods);
+	
+	for (i = 0; i < data->num_backends; i++) {
+		if (NT_STATUS_IS_OK(data->methods[i]->delete_sam_account(data->methods[i], sam_pass))) {
+			return NT_STATUS_OK;
+		}
+	}
+	DEBUG(1, ("Could not find SAM account in multisam backends\n"));
+	return NT_STATUS_UNSUCCESSFUL;
 }
 
 static NTSTATUS multisam_add_sam_account(struct pdb_methods *methods, struct samu * newpwd)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return multisam_replace_sam_account(methods, newpwd, 0);
+	struct multisam_data *data;
+	
+	SET_DATA(data, methods);
+	
+	DEBUG(0, ("Creating user in first multisam backend\n"));
+	return data->methods[0]->add_sam_account(data->methods[0], newpwd);
 }
 
 static NTSTATUS multisam_update_sam_account(struct pdb_methods *methods,
 							struct samu * newpwd)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return multisam_replace_sam_account(methods, newpwd, 1);
+	struct multisam_data *data;
+	
+	SET_DATA(data, methods);
+	DEBUG(0, ("Updating sam account in first multisam backend\n"));
+	/* FIXME: This only updates in the first one. */
+	return data->methods[0]->update_sam_account(data->methods[0], newpwd);
 }
 
 static NTSTATUS multisam_lookup_rids(struct pdb_methods *methods,
@@ -491,6 +539,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	data->names = str_list_make_talloc(data, data->location, NULL);
 	data->num_backends = str_list_count((const char **)data->names);
 	data->locations = talloc_array(data, char *, data->num_backends);
+	data->methods = talloc_array(data, struct pdb_methods *, data->num_backends);
 
 	for (i = 0; i < data->num_backends; i++) {
 		struct pdb_init_function_entry *entry = NULL;
@@ -499,7 +548,6 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 		if (data->locations[i]) {
 			*(data->locations[i]) = '\0';
 			data->locations[i]++;
-			DEBUG(5,("Got location: %s\n", data->locations[i]));
 		}
 
 		entry = pdb_find_backend_entry(data->names[i]);
