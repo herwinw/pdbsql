@@ -24,6 +24,9 @@ mysql.$(SHLIBEXT): pdb_mysql.o pdb_sql.o
 pgsql.$(SHLIBEXT): pdb_pgsql.o pdb_sql.o
 	$(CC) -shared -o $@ $^ $(PGSQL_LIBS)
 
+multi.$(SHLIBEXT): pdb_multi.o
+	$(CC) -shared -o $@ $^
+
 Makefile: Makefile.in config.status
 	./config.status
 
