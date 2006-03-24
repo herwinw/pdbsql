@@ -26,10 +26,10 @@ static int multisam_debug_level = DBGC_ALL;
 
 typedef struct multisam_data {
 	const char *location;
-	struct multisam_backend {
-		const char *location;
-		struct pdb_methods *methods;
-	} *backends;
+	int num_backends;
+	char **names;
+	char **locations;
+	struct pdb_methods **methods;
 } multisam_data;
 
 static BOOL multisam_search_groups(struct pdb_methods *methods,
@@ -365,6 +365,7 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
+	int i;
 	struct multisam_data *data;
 
 	multisam_debug_level = debug_add_class("multisam");
@@ -437,7 +438,30 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	}
 
 	data->location = talloc_strdup(data, location);
-	/* FIXME: parse location */
+	data->names = str_list_make_talloc(data, data->location, NULL);
+	data->num_backends = str_list_count(data->names);
+	data->locations = talloc_array(data, char *, data->num_backends);
+
+	for (i = 0; i < data->num_backends; i++) {
+		struct pdb_init_function_entry *entry;
+
+		data->locations[i] = strchr(data->names[i], ':');
+		if (data->locations[i]) {
+			data->locations[i] = '\0';
+			data->locations[i]++;
+		}
+
+		entry = pdb_find_backend_entry(data->names[i]);
+		if (!entry) {
+			DEBUG(0, ("Unable to find multisam backend %d: %s\n", i, data->names[i]));
+			return NT_STATUS_UNSUCCESSFUL;
+		}
+				
+		nt_status = entry->init(&data->methods[i], data->locations[i]);
+		if (NT_STATUS_IS_ERR(nt_status)) {
+			return nt_status;
+		}
+	}
 
 	return NT_STATUS_OK;
 }
