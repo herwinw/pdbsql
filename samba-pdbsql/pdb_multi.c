@@ -438,12 +438,19 @@ static NTSTATUS multisam_add_sam_account(struct pdb_methods *methods, struct sam
 static NTSTATUS multisam_update_sam_account(struct pdb_methods *methods,
 							struct samu * newpwd)
 {
+	short i;
 	struct multisam_data *data;
+	NTSTATUS ret;
 	
 	SET_DATA(data, methods);
-	DEBUG(0, ("Updating sam account in first multisam backend\n"));
-	/* FIXME: This only updates in the first one. */
-	return data->methods[0]->update_sam_account(data->methods[0], newpwd);
+	DEBUG(5, ("Updating sam account.\n"));
+	for (i = 0; i < data->num_backends; i++) {
+		ret = data->methods[i]->update_sam_account(data->methods[i], newpwd);
+		if (NT_STATUS_IS_OK(ret)) {
+			return ret;
+		}
+	}
+	return NT_STATUS_UNSUCCESSFUL;
 }
 
 static NTSTATUS multisam_lookup_rids(struct pdb_methods *methods,
