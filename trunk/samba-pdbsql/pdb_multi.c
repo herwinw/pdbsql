@@ -705,7 +705,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 			(*pdb_method)->del_aliasmem = multisam_del_aliasmem;
 		if (!IS_DEFAULT(data->methods[i], enum_aliasmem))
 			(*pdb_method)->enum_aliasmem = multisam_enum_aliasmem;
-		if (!IS_DEFAULT(data->methods[i], alias_memberships))
+		if (!IS_DEFAULT(data->methods[i], enum_alias_memberships))
 			(*pdb_method)->enum_alias_memberships = multisam_alias_memberships;
 		if (!IS_DEFAULT(data->methods[i], lookup_rids))
 			(*pdb_method)->lookup_rids = multisam_lookup_rids;
