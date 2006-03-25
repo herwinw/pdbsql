@@ -3,9 +3,9 @@
 CC = @CC@
 INSTALL = @INSTALL@
 
-modules = @modules@
-
 SHLIBEXT = @SHLIBEXT@
+
+modules = multi.$(SHLIBEXT) @modules@
 
 MYSQL_LIBS = @MYSQL_LIBS@
 PGSQL_LIBS = @PGSQL_LIBS@
