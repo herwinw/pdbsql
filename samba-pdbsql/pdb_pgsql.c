@@ -536,11 +536,10 @@ static NTSTATUS pgsqlsam_update_sam_account ( struct pdb_methods *methods, struc
 }
 
 static BOOL pgsqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
-	return False;
+	return True;
 }
 static BOOL pgsqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
-	*rid = 0;
-	return True;
+	return False;
 }
 
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location )
