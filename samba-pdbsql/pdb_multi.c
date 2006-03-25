@@ -44,7 +44,6 @@ typedef struct multisam_data {
 		return NT_STATUS_INVALID_HANDLE; \
 	} \
 }
-#define IS_DEFAULT(methods, function) ((*(data->default_methods)->function) == (*(methods)->function))
 
 static BOOL multisam_search_groups(struct pdb_methods *methods,
 				      struct pdb_search *search)
@@ -613,6 +612,45 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->rid_algorithm = multisam_rid_algorithm;
 	(*pdb_method)->new_rid = multisam_new_rid;
 
+	(*pdb_method)->create_user = multisam_create_user;
+	(*pdb_method)->delete_user = multisam_delete_user;
+	(*pdb_method)->uid_to_rid = multisam_uid_to_rid;
+	(*pdb_method)->gid_to_sid = multisam_gid_to_sid;
+	(*pdb_method)->sid_to_id = multisam_sid_to_id;
+
+	/* Not yet implemented here */
+#if 0
+	(*pdb_method)->update_login_attempts = multisam_update_login_attempts;
+	(*pdb_method)->getgrsid = multisam_getgrsid;
+	(*pdb_method)->getgrgid = multisam_getgrgid;
+	(*pdb_method)->getgrnam = multisam_getgrnam;
+	(*pdb_method)->create_dom_group = multisam_create_dom_group;
+	(*pdb_method)->delete_dom_group = multisam_delete_dom_group;
+	(*pdb_method)->add_group_mapping_entry = multisam_add_group_mapping_entry;
+	(*pdb_method)->update_group_mapping_entry = multisam_update_group_mapping_entry;
+	(*pdb_method)->delete_group_mapping_entry = multisam_delete_group_mapping_entry;
+	(*pdb_method)->enum_group_mapping = multisam_enum_group_mapping;
+	(*pdb_method)->enum_group_members = multisam_enum_group_members;
+	(*pdb_method)->enum_group_memberships = multisam_enum_group_memberships;
+	(*pdb_method)->add_groupmem = multisam_add_groupmem;
+	(*pdb_method)->del_groupmem = multisam_del_groupmem;
+	(*pdb_method)->find_alias = multisam_find_alias;
+	(*pdb_method)->create_alias = multisam_create_alias;
+	(*pdb_method)->delete_alias = multisam_delete_alias;
+	(*pdb_method)->get_aliasinfo = multisam_get_aliasinfo;
+	(*pdb_method)->set_aliasinfo = multisam_set_aliasinfo;
+	(*pdb_method)->add_aliasmem = multisam_add_aliasmem;
+	(*pdb_method)->del_aliasmem = multisam_del_aliasmem;
+	(*pdb_method)->enum_aliasmem = multisam_enum_aliasmem;
+	(*pdb_method)->enum_alias_memberships = multisam_alias_memberships;
+	(*pdb_method)->lookup_rids = multisam_lookup_rids;
+	(*pdb_method)->get_account_policy = multisam_get_account_policy;
+	(*pdb_method)->set_account_policy = multisam_set_account_policy;
+	(*pdb_method)->get_seq_num = multisam_get_seq_num;
+	(*pdb_method)->search_users = multisam_search_users;
+	(*pdb_method)->search_groups = multisam_search_groups;
+	(*pdb_method)->search_aliases = multisam_search_aliases;
+#endif
 
 	if (!location) {
 		DEBUG(0, ("No identifier specified. Check the Samba HOWTO Collection for details\n"));
@@ -653,81 +691,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 		if (NT_STATUS_IS_ERR(nt_status)) {
 			return nt_status;
 		}
-		
-		/* Optional.. only set if implemented */
-		if (!IS_DEFAULT(data->methods[i], update_login_attempts))
-			(*pdb_method)->update_login_attempts = multisam_update_login_attempts;
-		if (!IS_DEFAULT(data->methods[i], create_user))
-			(*pdb_method)->create_user = multisam_create_user;
-		if (!IS_DEFAULT(data->methods[i], delete_user))
-			(*pdb_method)->delete_user = multisam_delete_user;
-		if (!IS_DEFAULT(data->methods[i], getgrsid))
-			(*pdb_method)->getgrsid = multisam_getgrsid;
-		if (!IS_DEFAULT(data->methods[i], getgrgid))
-			(*pdb_method)->getgrgid = multisam_getgrgid;
-		if (!IS_DEFAULT(data->methods[i], getgrnam))
-			(*pdb_method)->getgrnam = multisam_getgrnam;
-		if (!IS_DEFAULT(data->methods[i], create_dom_group))
-			(*pdb_method)->create_dom_group = multisam_create_dom_group;
-		if (!IS_DEFAULT(data->methods[i], delete_dom_group))
-			(*pdb_method)->delete_dom_group = multisam_delete_dom_group;
-		if (!IS_DEFAULT(data->methods[i], add_group_mapping_entry))
-			(*pdb_method)->add_group_mapping_entry = multisam_add_group_mapping_entry;
-		if (!IS_DEFAULT(data->methods[i], update_group_mapping_entry))
-			(*pdb_method)->update_group_mapping_entry = multisam_update_group_mapping_entry;
-		if (!IS_DEFAULT(data->methods[i], delete_group_mapping_entry))
-			(*pdb_method)->delete_group_mapping_entry = multisam_delete_group_mapping_entry;
-		if (!IS_DEFAULT(data->methods[i], enum_group_mapping))
-			(*pdb_method)->enum_group_mapping = multisam_enum_group_mapping;
-		if (!IS_DEFAULT(data->methods[i], enum_group_members))
-			(*pdb_method)->enum_group_members = multisam_enum_group_members;
-		if (!IS_DEFAULT(data->methods[i], enum_group_memberships))
-			(*pdb_method)->enum_group_memberships = multisam_enum_group_memberships;
-		if (!IS_DEFAULT(data->methods[i], set_unix_primary_group))
-			(*pdb_method)->set_unix_primary_group = multisam_set_unix_primary_group;
-		if (!IS_DEFAULT(data->methods[i], add_groupmem))
-			(*pdb_method)->add_groupmem = multisam_add_groupmem;
-		if (!IS_DEFAULT(data->methods[i], del_groupmem))
-			(*pdb_method)->del_groupmem = multisam_del_groupmem;
-		if (!IS_DEFAULT(data->methods[i], find_alias))
-			(*pdb_method)->find_alias = multisam_find_alias;
-		if (!IS_DEFAULT(data->methods[i], create_alias))
-			(*pdb_method)->create_alias = multisam_create_alias;
-		if (!IS_DEFAULT(data->methods[i], delete_alias))
-			(*pdb_method)->delete_alias = multisam_delete_alias;
-		if (!IS_DEFAULT(data->methods[i], get_aliasinfo))
-			(*pdb_method)->get_aliasinfo = multisam_get_aliasinfo;
-		if (!IS_DEFAULT(data->methods[i], set_aliasinfo))
-			(*pdb_method)->set_aliasinfo = multisam_set_aliasinfo;
-		if (!IS_DEFAULT(data->methods[i], add_aliasmem))
-			(*pdb_method)->add_aliasmem = multisam_add_aliasmem;
-		if (!IS_DEFAULT(data->methods[i], del_aliasmem))
-			(*pdb_method)->del_aliasmem = multisam_del_aliasmem;
-		if (!IS_DEFAULT(data->methods[i], enum_aliasmem))
-			(*pdb_method)->enum_aliasmem = multisam_enum_aliasmem;
-		if (!IS_DEFAULT(data->methods[i], enum_alias_memberships))
-			(*pdb_method)->enum_alias_memberships = multisam_alias_memberships;
-		if (!IS_DEFAULT(data->methods[i], lookup_rids))
-			(*pdb_method)->lookup_rids = multisam_lookup_rids;
-		if (!IS_DEFAULT(data->methods[i], get_account_policy))
-			(*pdb_method)->get_account_policy = multisam_get_account_policy;
-		if (!IS_DEFAULT(data->methods[i], set_account_policy))
-			(*pdb_method)->set_account_policy = multisam_set_account_policy;
-		if (!IS_DEFAULT(data->methods[i], get_seq_num))
-			(*pdb_method)->get_seq_num = multisam_get_seq_num;
-		if (!IS_DEFAULT(data->methods[i], uid_to_rid))
-			(*pdb_method)->uid_to_rid = multisam_uid_to_rid;
-		if (!IS_DEFAULT(data->methods[i], gid_to_sid))
-			(*pdb_method)->gid_to_sid = multisam_gid_to_sid;
-		if (!IS_DEFAULT(data->methods[i], sid_to_id))
-			(*pdb_method)->sid_to_id = multisam_sid_to_id;
-		if (!IS_DEFAULT(data->methods[i], search_users))
-			(*pdb_method)->search_users = multisam_search_users;
-		if (!IS_DEFAULT(data->methods[i], search_groups))
-			(*pdb_method)->search_groups = multisam_search_groups;
-		if (!IS_DEFAULT(data->methods[i], search_aliases))
-			(*pdb_method)->search_aliases = multisam_search_aliases;
-	}
+	}	
 	return NT_STATUS_OK;
 }
 
