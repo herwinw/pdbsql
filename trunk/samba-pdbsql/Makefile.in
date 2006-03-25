@@ -5,7 +5,7 @@ INSTALL = @INSTALL@
 
 SHLIBEXT = @SHLIBEXT@
 
-modules = multi.$(SHLIBEXT) @modules@
+modules = multi @modules@
 
 MYSQL_LIBS = @MYSQL_LIBS@
 PGSQL_LIBS = @PGSQL_LIBS@
