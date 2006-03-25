@@ -44,6 +44,7 @@ typedef struct multisam_data {
 		return NT_STATUS_INVALID_HANDLE; \
 	} \
 }
+#define IS_DEFAULT(methods, function) ((*(data->default_methods)->function) == (*(methods)->function))
 
 static BOOL multisam_search_groups(struct pdb_methods *methods,
 				      struct pdb_search *search)
