@@ -76,6 +76,7 @@ static BOOL multisam_new_rid(struct pdb_methods *methods,
 	return True;
 }
 
+#if 0
 static BOOL multisam_search_groups(struct pdb_methods *methods,
 				      struct pdb_search *search)
 {
@@ -96,7 +97,6 @@ static BOOL multisam_search_users(struct pdb_methods *methods,
 	return False;
 }
 
-
 static NTSTATUS multisam_get_account_policy(struct pdb_methods *methods, int policy_index, uint32 *value)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
@@ -114,6 +114,7 @@ static NTSTATUS multisam_get_seq_num(struct pdb_methods *methods, time_t *seq_nu
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
+#endif
 
 /* Tries uid_to_rid on every backend until one succeeds, returns true on success */
 static BOOL multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
@@ -182,7 +183,7 @@ static BOOL multisam_sid_to_id(struct pdb_methods *methods,
 	return False;
 }
 
-
+#if 0
 static NTSTATUS multisam_set_unix_primary_group(struct pdb_methods *methods,
 						   TALLOC_CTX *mem_ctx,
 						   struct samu *sampass)
@@ -190,7 +191,7 @@ static NTSTATUS multisam_set_unix_primary_group(struct pdb_methods *methods,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
-
+#endif
 
 static NTSTATUS multisam_create_user(struct pdb_methods *methods,
 					TALLOC_CTX *tmp_ctx, const char *name,
@@ -217,10 +218,21 @@ static NTSTATUS multisam_delete_user(struct pdb_methods *methods,
 					TALLOC_CTX *mem_ctx,
 					struct samu *sam_acct)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
+	short i;
+	struct multisam_data *data;
+
+	SET_DATA(data, methods);
+	
+	for (i = 0; i < data->num_backends; i++) {
+		if (NT_STATUS_IS_OK(data->methods[i]->delete_user(data->methods[i], mem_ctx, sam_acct))) {
+			return NT_STATUS_OK;
+		}
+	}
+	DEBUG(1, ("Could not find user in multisam backends\n"));
+	return NT_STATUS_UNSUCCESSFUL;
 }
 
+#if 0
 static NTSTATUS multisam_enum_group_memberships(struct pdb_methods *methods,
 					    TALLOC_CTX *mem_ctx,
 					    struct samu *user,
@@ -253,12 +265,6 @@ static NTSTATUS multisam_delete_dom_group(struct pdb_methods *methods,
 }
 
 
-static NTSTATUS multisam_rename_sam_account (struct pdb_methods *methods, struct samu *pwd, const char *newname)
-{
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS multisam_update_login_attempts (struct pdb_methods *methods, struct samu *newpwd, BOOL success)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
@@ -285,6 +291,7 @@ static NTSTATUS multisam_getgrnam(struct pdb_methods *methods, GROUP_MAP *map,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
+#endif
 
 static NTSTATUS multisam_add_group_mapping_entry(struct pdb_methods *methods,
 						GROUP_MAP *map)
@@ -293,7 +300,8 @@ static NTSTATUS multisam_add_group_mapping_entry(struct pdb_methods *methods,
 	struct multisam_data *data;
 
 	SET_DATA(data, methods);
-	
+
+	DEBUG(1, ("Adding group map entry\n"));
 	for (i = 0; i < data->num_backends; i++) {
 		if (!IS_DEFAULT(data->methods[i], add_group_mapping_entry)) {
 			return data->methods[i]->add_group_mapping_entry(data->methods[i], map);
@@ -343,6 +351,7 @@ static NTSTATUS multisam_delete_group_mapping_entry(struct pdb_methods *methods,
 	return NT_STATUS_UNSUCCESSFUL;
 }
 
+#if 0
 static NTSTATUS multisam_enum_group_mapping(struct pdb_methods *methods,
 					   const DOM_SID *sid, enum SID_NAME_USE sid_name_use,
 					   GROUP_MAP **pp_rmap, size_t *p_num_entries,
@@ -422,6 +431,7 @@ static NTSTATUS multisam_alias_memberships(struct pdb_methods *methods,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
+#endif
 
 /* Creates user list in every backend */
 static NTSTATUS multisam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
@@ -583,7 +593,25 @@ static NTSTATUS multisam_update_sam_account(struct pdb_methods *methods,
 	}
 	return NT_STATUS_UNSUCCESSFUL;
 }
+static NTSTATUS multisam_rename_sam_account (struct pdb_methods *methods, struct samu *pwd, const char *newname)
+{
+	short i;
+	struct multisam_data *data;
+	NTSTATUS ret;
+	
+	SET_DATA(data, methods);
+	DEBUG(5, ("Renaming sam account.\n"));
+	for (i = 0; i < data->num_backends; i++) {
+		ret = data->methods[i]->rename_sam_account(data->methods[i], pwd, newname);
+		if (NT_STATUS_IS_OK(ret)) {
+			return ret;
+		}
+	}
+	return NT_STATUS_UNSUCCESSFUL;
+}
 
+
+#if 0
 static NTSTATUS multisam_lookup_rids(struct pdb_methods *methods,
 				 const DOM_SID *domain_sid,
 				 int num_rids,
@@ -620,6 +648,7 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
+#endif
 
 /* The rid algorithm of the first backend is used. */
 static BOOL multisam_rid_algorithm (struct pdb_methods *methods)
@@ -680,9 +709,6 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->gid_to_sid = multisam_gid_to_sid;
 	(*pdb_method)->sid_to_id = multisam_sid_to_id;
 	
-	(*pdb_method)->add_group_mapping_entry = multisam_add_group_mapping_entry;
-	(*pdb_method)->update_group_mapping_entry = multisam_update_group_mapping_entry;
-	(*pdb_method)->delete_group_mapping_entry = multisam_delete_group_mapping_entry;
 
 	/* Not yet implemented here */
 #if 0
@@ -754,6 +780,13 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 		if (NT_STATUS_IS_ERR(nt_status)) {
 			return nt_status;
 		}
+		/* These functions are only used on LDAP now.. */
+		if (!IS_DEFAULT(data->methods[i], add_group_mapping_entry))
+			(*pdb_method)->add_group_mapping_entry = multisam_add_group_mapping_entry;
+		if (!IS_DEFAULT(data->methods[i], update_group_mapping_entry))
+			(*pdb_method)->update_group_mapping_entry = multisam_update_group_mapping_entry;
+		if (!IS_DEFAULT(data->methods[i], delete_group_mapping_entry))
+			(*pdb_method)->delete_group_mapping_entry = multisam_delete_group_mapping_entry;
 	}	
 	return NT_STATUS_OK;
 }
