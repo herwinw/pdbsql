@@ -46,6 +46,36 @@ typedef struct multisam_data {
 }
 #define IS_DEFAULT(methods, function) ((*(data->default_methods)->function) == (*(methods)->function))
 
+static BOOL multisam_new_rid(struct pdb_methods *methods,
+				uint32 *rid,
+				short backend) 
+{
+	short i;
+	struct multisam_data *data;
+	
+	if (!methods) return False;
+	data = (struct multisam_data *)methods->private_data;
+	if (!data) return False;
+	
+	
+	/* 250 tries.. Andrew Bartlett picked the number. */
+	for (i = 0; *rid == 0 && i < 250; i++) {
+		if (!data->methods[backend]->new_rid(data->methods[backend], rid)) {
+			return False;
+		}
+		/* FIXME We need a function to check if a rid is used.
+		if () {
+			*rid = 0;
+		} */
+	}
+	
+	if (*rid == 0) {
+		return False;
+	}
+	
+	return True;
+}
+
 static BOOL multisam_search_groups(struct pdb_methods *methods,
 				      struct pdb_search *search)
 {
@@ -173,7 +203,14 @@ static NTSTATUS multisam_create_user(struct pdb_methods *methods,
 	DEBUG(0, ("Creating user in first multisam backend\n"));
 
 	/* XXX Might be nice to allow separations of machine accounts here? */
-	return data->methods[0]->create_user(data->methods[0], tmp_ctx, name, acb_info, rid);
+
+
+	/* Get a new free rid if necessary */
+	if (data->methods[0]->rid_algorithm(data->methods[0])) {
+		multisam_new_rid(methods, rid, 0);
+	}
+	
+	return data->methods[0]->create_user(data->methods[0], tmp_ctx, name, acb_info, rid);	
 }
 
 static NTSTATUS multisam_delete_user(struct pdb_methods *methods,
@@ -252,22 +289,58 @@ static NTSTATUS multisam_getgrnam(struct pdb_methods *methods, GROUP_MAP *map,
 static NTSTATUS multisam_add_group_mapping_entry(struct pdb_methods *methods,
 						GROUP_MAP *map)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
+	short i;
+	struct multisam_data *data;
+
+	SET_DATA(data, methods);
+	
+	for (i = 0; i < data->num_backends; i++) {
+		if (!IS_DEFAULT(data->methods[i], add_group_mapping_entry)) {
+			return data->methods[i]->add_group_mapping_entry(data->methods[i], map);
+		}
+	}
+	
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS multisam_update_group_mapping_entry(struct pdb_methods *methods,
 						   GROUP_MAP *map)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
+	short i;
+	struct multisam_data *data;
+	NTSTATUS ret;
+
+	SET_DATA(data, methods);
+
+	for (i = 0; i < data->num_backends; i++) {
+		if (!IS_DEFAULT(data->methods[i], update_group_mapping_entry)) {
+			ret = data->methods[i]->update_group_mapping_entry(data->methods[i], map);
+			if (NT_STATUS_IS_OK(ret)) {
+				return ret;
+			}
+		}
+	}
+	return NT_STATUS_UNSUCCESSFUL;
 }
 
 static NTSTATUS multisam_delete_group_mapping_entry(struct pdb_methods *methods,
 						   DOM_SID sid)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
+	short i;
+	struct multisam_data *data;
+	NTSTATUS ret;
+
+	SET_DATA(data, methods);
+
+	for (i = 0; i < data->num_backends; i++) {
+		if (!IS_DEFAULT(data->methods[i], delete_group_mapping_entry)) {
+			ret = data->methods[i]->delete_group_mapping_entry(data->methods[i], sid);
+			if (NT_STATUS_IS_OK(ret)) {
+				return ret;
+			}
+		}
+	}
+	return NT_STATUS_UNSUCCESSFUL;
 }
 
 static NTSTATUS multisam_enum_group_mapping(struct pdb_methods *methods,
@@ -518,7 +591,6 @@ static NTSTATUS multisam_lookup_rids(struct pdb_methods *methods,
 				 const char **names,
 				 uint32 *attrs)
 {
-	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
@@ -552,24 +624,13 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 /* The rid algorithm of the first backend is used. */
 static BOOL multisam_rid_algorithm (struct pdb_methods *methods)
 {
-	struct multisam_data *data;
-
-	if (!methods) return False;
-	data = (struct multisam_data *)methods->private_data;
-	if (!data) return False;
-	
-	return data->methods[0]->rid_algorithm(data->methods[0]);
+	return True;
 }
-/* New rid algorithm of the first backend is used (we add there anyway) */
-static BOOL multisam_new_rid (struct pdb_methods *methods, uint32 *rid)
+/* This function is a fallback for errors */
+static BOOL multisam_dummy_new_rid (struct pdb_methods *methods, uint32 *rid)
 {
-	struct multisam_data *data;
-
-	if (!methods) return False;
-	data = (struct multisam_data *)methods->private_data;
-	if (!data) return False;
-	
-	return data->methods[0]->new_rid(data->methods[0], rid);
+	DEBUG(0, ("This function should not be used!\n"));
+	return False;
 }
 
 static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *location)
@@ -611,13 +672,17 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->delete_sam_account = multisam_delete_sam_account;
 	(*pdb_method)->rename_sam_account = multisam_rename_sam_account;
 	(*pdb_method)->rid_algorithm = multisam_rid_algorithm;
-	(*pdb_method)->new_rid = multisam_new_rid;
+	(*pdb_method)->new_rid = multisam_dummy_new_rid;
 
 	(*pdb_method)->create_user = multisam_create_user;
 	(*pdb_method)->delete_user = multisam_delete_user;
 	(*pdb_method)->uid_to_rid = multisam_uid_to_rid;
 	(*pdb_method)->gid_to_sid = multisam_gid_to_sid;
 	(*pdb_method)->sid_to_id = multisam_sid_to_id;
+	
+	(*pdb_method)->add_group_mapping_entry = multisam_add_group_mapping_entry;
+	(*pdb_method)->update_group_mapping_entry = multisam_update_group_mapping_entry;
+	(*pdb_method)->delete_group_mapping_entry = multisam_delete_group_mapping_entry;
 
 	/* Not yet implemented here */
 #if 0
@@ -627,9 +692,6 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->getgrnam = multisam_getgrnam;
 	(*pdb_method)->create_dom_group = multisam_create_dom_group;
 	(*pdb_method)->delete_dom_group = multisam_delete_dom_group;
-	(*pdb_method)->add_group_mapping_entry = multisam_add_group_mapping_entry;
-	(*pdb_method)->update_group_mapping_entry = multisam_update_group_mapping_entry;
-	(*pdb_method)->delete_group_mapping_entry = multisam_delete_group_mapping_entry;
 	(*pdb_method)->enum_group_mapping = multisam_enum_group_mapping;
 	(*pdb_method)->enum_group_members = multisam_enum_group_members;
 	(*pdb_method)->enum_group_memberships = multisam_enum_group_memberships;
