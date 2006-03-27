@@ -18,3 +18,11 @@ Depends: ${shlibs:Depends}, samba
 Description: PostGreSQL user database support for Samba
  This package adds support for storing Samba user information 
  in PostGreSQL.
+
+Package: samba-pdb-multi
+Architecture: any
+Depends: ${shlibs:Depends}, samba
+Description: Support for concurrent user databases in Samba
+ This package adds support to Samba for using multiple 
+ 'passdb backends' at the same time. This feature was removed 
+ from upstream Samba in version 3.0.22.
