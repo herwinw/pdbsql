@@ -325,6 +325,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 										   CONFIG_ACCT_CTRL_DEFAULT),
 						pdb_get_acct_ctrl(newpwd));
 	}
+	
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LOGONTIME)) {
  		some_field_affected = 1;
@@ -466,6 +467,14 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 											  CONFIG_PROFILE_PATH_DEFAULT),
 						   pdb_get_profile_path(newpwd));
 	}
+/* acct_desc update [C] */
+	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_ACCTDESC)) {
+ 		some_field_affected = 1;
+		pdb_sql_string_field(query,
+						    config_value_write(location, "acct desc column",
+										   CONFIG_ACCT_DESC_DEFAULT),
+						pdb_get_acct_desc(newpwd));
+	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_DRIVE)) {
  		some_field_affected = 1;
@@ -482,6 +491,9 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 											  CONFIG_HOME_DIR_DEFAULT),
 						   pdb_get_homedir(newpwd));
 	}
+
+
+/* */
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_WORKSTATIONS)) {
  		some_field_affected = 1;
