@@ -33,5 +33,6 @@ CREATE TABLE user (
 	bad_password_count int(9) default NULL,
 	logon_count int(9) default '0',
 	logon_hours varchar(42) default NULL,
+	password_history text default NULL,
 	KEY username(username)
 );

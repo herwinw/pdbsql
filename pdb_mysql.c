@@ -140,6 +140,20 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 	pdb_set_bad_password_count(u, xatol(row[26]), PDB_SET);
 	pdb_set_logon_count(u, xatol(row[27]), PDB_SET);
 	pdb_set_unknown_6(u, xatol(row[28]), PDB_SET);
+	pdb_set_hours(u, (uint8 *)row[29], PDB_SET);
+	
+	if (row[30]) {
+		uint8 pwhist[MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN];
+		int i;
+		
+		memset(&pwhist, 0, MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN);
+		for (i = 0; i < MAX_PW_HISTORY_LEN && i < strlen(row[30])/64; i++) {
+			pdb_gethexpwd(&(row[30])[i*64], &pwhist[i*PW_HISTORY_ENTRY_LEN]);
+			pdb_gethexpwd(&(row[30])[i*64+32], 
+					&pwhist[i*PW_HISTORY_ENTRY_LEN+PW_HISTORY_SALT_LEN]);
+		}
+		pdb_set_pw_history(u, pwhist, strlen(row[30])/64, PDB_SET);
+	}
 
 	return NT_STATUS_OK;
 }
