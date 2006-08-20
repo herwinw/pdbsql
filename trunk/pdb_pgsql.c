@@ -176,8 +176,8 @@ static NTSTATUS row_to_sam_account ( PGresult *r, long row, struct samu *u )
     hours = PQunescapeBytea ( hours, &hours_len ) ;
     if ( hours_len > 0 )
        pdb_set_hours            ( u, hours, PDB_SET ) ;
-    free ( hours );
   }
+  
   
   if ( !PQgetisnull( r, row, 18 ) ) {
     string_to_sid( &sid, PQgetvalue( r, row, 18 ) ) ;
@@ -191,6 +191,21 @@ static NTSTATUS row_to_sam_account ( PGresult *r, long row, struct samu *u )
   
   if ( pdb_gethexpwd( PQgetvalue( r, row, 20 ), temp ), PDB_SET ) pdb_set_lanman_passwd( u, temp, PDB_SET ) ;
   if ( pdb_gethexpwd( PQgetvalue( r, row, 21 ), temp ), PDB_SET ) pdb_set_nt_passwd    ( u, temp, PDB_SET ) ;
+
+	if (!PQgetisnull( r, row, 30 ) ) {
+		uint8 pwhist[MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN];
+		int i;
+		char *history_string = PQgetvalue( r, row, 30);
+		
+		memset(&pwhist, 0, MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN);
+		for (i = 0; i < MAX_PW_HISTORY_LEN && i < strlen(history_string)/64; i++) {
+			pdb_gethexpwd(&(history_string)[i*64], &pwhist[i*PW_HISTORY_ENTRY_LEN]);
+			pdb_gethexpwd(&(history_string)[i*64+32], 
+					&pwhist[i*PW_HISTORY_ENTRY_LEN+PW_HISTORY_SALT_LEN]);
+		}
+		pdb_set_pw_history(u, pwhist, strlen(history_string)/64, PDB_SET);
+	}
+
   
   /* Only use plaintext password storage when lanman and nt are NOT used */
   if ( PQgetisnull( r, row, 20 ) || PQgetisnull( r, row, 21 ) ) pdb_set_plaintext_passwd( u, PQgetvalue( r, row, 22 ) ) ;

@@ -49,7 +49,8 @@
 #define CONFIG_BAD_PASSWORD_COUNT_DEFAULT		"bad_password_count"
 #define CONFIG_LOGON_COUNT_DEFAULT			"logon_count"
 #define CONFIG_UNKNOWN_6_DEFAULT			"unknown_6"
-#define CONFIG_LOGON_HOURS				"logon_hours"
+#define CONFIG_LOGON_HOURS_DEFAULT			"logon_hours"
+#define CONFIG_PASSWORD_HISTORY_DEFAULT			"password_history"
 
 /* Used to construct insert and update queries */
 
@@ -213,7 +214,7 @@ char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, BOOL updat
 	}
 
 	query = talloc_asprintf(mem_ctx,
-			 "SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = '%s'",
+			 "SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = '%s'",
 			 config_value_read(data, "logon time column",
 							   CONFIG_LOGON_TIME_DEFAULT),
 			 config_value_read(data, "logoff time column",
@@ -273,7 +274,9 @@ char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, BOOL updat
 			 config_value_read(data, "unknown 6 column",
 							   CONFIG_UNKNOWN_6_DEFAULT),
 			 config_value_read(data, "logon hours column",
-							   CONFIG_LOGON_HOURS),
+							   CONFIG_LOGON_HOURS_DEFAULT),
+			 config_value_read(data, "password history column",
+							   CONFIG_PASSWORD_HISTORY_DEFAULT),
 			 config_value(data, "table", CONFIG_TABLE_DEFAULT), 
 			 field_string, value
 				 );
@@ -467,7 +470,6 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 											  CONFIG_PROFILE_PATH_DEFAULT),
 						   pdb_get_profile_path(newpwd));
 	}
-/* acct_desc update [C] */
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_ACCTDESC)) {
  		some_field_affected = 1;
 		pdb_sql_string_field(query,
@@ -491,9 +493,6 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 											  CONFIG_HOME_DIR_DEFAULT),
 						   pdb_get_homedir(newpwd));
 	}
-
-
-/* */
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_WORKSTATIONS)) {
  		some_field_affected = 1;
@@ -537,8 +536,31 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
  		pdb_sql_string_field(query,
  							config_value_write(location,
  											   "logon hours column",
- 											   CONFIG_LOGON_HOURS),
+ 											   CONFIG_LOGON_HOURS_DEFAULT),
  							(const char *)pdb_get_hours(newpwd));
+ 	}
+
+ 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PWHISTORY)) {
+		uint32 pw_history_len = 0;
+		uint32 max_history_len = 0;
+		int i;
+		const uint8 *pwhist;
+		
+		pwhist = pdb_get_pw_history(newpwd, &pw_history_len);
+		
+		pdb_get_account_policy(AP_PASSWORD_HISTORY, &max_history_len);
+		
+		some_field_affected = 1;
+		for (i = 0; i < max_history_len && i < pw_history_len; i++) {
+			pdb_sethexpwd(&temp[i*64], &pwhist[i*PW_HISTORY_ENTRY_LEN], 0);
+			pdb_sethexpwd(&temp[i*64+32],
+					&pwhist[(i*PW_HISTORY_ENTRY_LEN)+PW_HISTORY_SALT_LEN], 0);		
+ 		}
+ 		pdb_sql_string_field(query,
+ 							config_value_write(location,
+ 											   "password history column",
+ 											   CONFIG_PASSWORD_HISTORY_DEFAULT),
+ 							temp);
  	}
 
  	if (!some_field_affected) {
