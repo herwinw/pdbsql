@@ -59,7 +59,7 @@ typedef struct pdb_sql_query {
 	char *part2;
 } pdb_sql_query;
 
-static void pdb_sql_int_field(struct pdb_sql_query *q, const char *name, int value)
+static void pdb_sql_int_field(struct pdb_sql_query *q, const char *name, long value)
 {
 	if (!name || strchr(name, '\''))
 		return;                 /* This field shouldn't be set by us */
@@ -67,12 +67,12 @@ static void pdb_sql_int_field(struct pdb_sql_query *q, const char *name, int val
 	if (q->update) {
 		q->part1 =
 			talloc_asprintf_append(q->part1,
-								   "%s = %d,", name, value);
+								   "%s = %ld,", name, value);
 	} else {
 		q->part1 =
 			talloc_asprintf_append(q->part1, "%s,", name);
 		q->part2 =
-			talloc_asprintf_append(q->part2, "%d,", value);
+			talloc_asprintf_append(q->part2, "%ld,", value);
 	}
 }
 
