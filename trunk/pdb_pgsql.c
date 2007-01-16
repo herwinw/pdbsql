@@ -19,7 +19,7 @@
  * Mass Ave, Cambridge, MA 02139, USA.
  *
  * TODO
- * * Volker commited Turst domain passwords to be included in the pdb.
+ * * Volker commited Trust domain passwords to be included in the pdb.
  *   These need to be added here:
  *   BOOL get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
  *   BOOL set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
