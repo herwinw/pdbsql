@@ -16,6 +16,14 @@
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 675
  * Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * TODO
+ * * Volker commited Turst domain passwords to be included in the pdb.
+ *   These need to be added here:
+ *   BOOL get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
+ *   BOOL set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
+ *   BOOL del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
+ *   NTSTATUS enum_trusteddoms(struct pdb_methods *methods, TALLOC_CTX *mem_ctx, uint32 *num_domains, struct trustdom_info ***domains)
  */
 
 #include "includes.h"
