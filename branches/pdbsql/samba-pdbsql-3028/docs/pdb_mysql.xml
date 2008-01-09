@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article>
+	<title>MySQL Password Database backend</title>
+	<articleinfo>
+		<author>
+			<firstname>Jelmer</firstname>
+			<surname>Vernooij</surname>
+			<affiliation><orgname>Samba Team</orgname>
+				<address><email>jelmer@samba.org</email></address>
+			</affiliation>
+		</author>
+	</articleinfo>
+
+<section>
+<title>Creating the Database</title>
+
+<para>
+You can set up your own table and specify the field names to pdb_mysql (see
+<link linkend="moremysqlpdbe">MySQL field names for MySQL passdb backend</link> for
+the column names) or use the default table. The file
+	<filename>examples/pdb/mysql/mysql.dump</filename> contains the correct queries to
+	create the required tables. Use the command:
+<screen>
+	<prompt># </prompt><userinput>mysql -u<replaceable>username</replaceable> -h<replaceable>hostname</replaceable> -p<replaceable>password</replaceable> \
+	<replaceable>databasename</replaceable> &lt; <filename>/path/to/samba/examples/pdb/mysql/mysql.dump</filename></userinput>
+</screen>
+	</para>
+</section>
+
+<section>
+	<title>Configuring</title>
+
+	<para>This plug-in lacks some good documentation, but here is some brief information. Add the following to the
+		<parameter>passdb backend</parameter> variable in your <filename>smb.conf</filename>:
+<programlisting>
+passdb backend = [other-plugins] mysql:identifier [other-plugins]
+</programlisting>
+	</para>
+
+	<para>The identifier can be any string you like, as long as it does not collide with 
+	the identifiers of other plugins or other instances of pdb_mysql. If you 
+	specify multiple pdb_mysql.so entries in <parameter>passdb backend</parameter>, you also need to 
+	use different identifiers.
+	</para>
+
+	<para>
+		Additional options can be given through the <filename>smb.conf</filename> file in the <parameter>[global]</parameter> section.
+	Refer to <link linkend="mysqlpbe">Basic smb.conf Options for MySQL passdb Backend</link>.
+	</para>
+
+	<table frame="all" id="mysqlpbe">
+		<title>Basic smb.conf Options for MySQL passdb Backend</title>
+		<tgroup cols="2">
+			<colspec align="left"/>
+			<colspec align="justify" colwidth="1*"/>
+		<thead>
+			<row><entry>Field</entry><entry>Contents</entry></row>
+		</thead>
+		<tbody>
+			<row><entry>mysql host</entry><entry>Host name, defaults to `localhost'</entry></row>
+			<row><entry>mysql password</entry><entry></entry></row>
+			<row><entry>mysql user</entry><entry>Defaults to `samba'</entry></row>
+			<row><entry>mysql database</entry><entry>Defaults to `samba'</entry></row>
+			<row><entry>mysql port</entry><entry>Defaults to 3306</entry></row>
+			<row><entry>table</entry><entry>Name of the table containing the users</entry></row>
+		</tbody>
+		</tgroup>
+	</table>
+
+	<warning>
+	<para>
+		Since the password for the MySQL user is stored in the <filename>smb.conf</filename> file, you should make the <filename>smb.conf</filename> file 
+	readable only to the user who runs Samba. This is considered a security bug and will soon be fixed.
+	</para>
+	</warning>
+
+	<para>Names of the columns are given in <link linkend="moremysqlpdbe">MySQL field names for MySQL
+	passdb backend</link>.  The default column names can be found in the example table dump.
+	 </para>
+
+<para>
+	<table frame="all" id="moremysqlpdbe">
+		<title>MySQL field names for MySQL passdb backend</title>
+		<tgroup cols="3" align="justify">
+			<colspec align="left"/>
+			<colspec align="left"/>
+			<colspec align="justify" colwidth="1*"/>
+	<thead>		
+		<row><entry>Field</entry><entry>Type</entry><entry>Contents</entry></row>
+	</thead>
+	<tbody>
+		<row><entry>logon time column</entry><entry>int(9)</entry><entry>UNIX timestamp of last logon of user</entry></row>
+		<row><entry>logoff time column</entry><entry>int(9)</entry><entry>UNIX timestamp of last logoff of user</entry></row>
+		<row><entry>kickoff time column</entry><entry>int(9)</entry><entry>UNIX timestamp of moment user should be kicked off workstation (not enforced)</entry></row>
+		<row><entry>pass last set time column</entry><entry>int(9)</entry><entry>UNIX timestamp of moment password was last set</entry></row>
+		<row><entry>pass can change time column</entry><entry>int(9)</entry><entry>UNIX timestamp of moment from which password can be changed</entry></row>
+		<row><entry>pass must change time column</entry><entry>int(9)</entry><entry>UNIX timestamp of moment on which password must be changed</entry></row>
+		<row><entry>username column</entry><entry>varchar(255)</entry><entry>UNIX username</entry></row>
+		<row><entry>domain column</entry><entry>varchar(255)</entry><entry>NT domain user belongs to</entry></row>
+		<row><entry>nt username column</entry><entry>varchar(255)</entry><entry>NT username</entry></row>
+		<row><entry>fullname column</entry><entry>varchar(255)</entry><entry>Full name of user</entry></row>
+		<row><entry>home dir column</entry><entry>varchar(255)</entry><entry>UNIX homedir path (equivalent of the <parameter>logon home</parameter> parameter.</entry></row>
+		<row><entry>dir drive column</entry><entry>varchar(2)</entry><entry>Directory drive path (e.g., <quote>H:</quote>)</entry></row>
+		<row><entry>logon script column</entry><entry>varchar(255)</entry><entry>Batch file to run on client side when logging on</entry></row>
+		<row><entry>profile path column</entry><entry>varchar(255)</entry><entry>Path of profile</entry></row>
+		<row><entry>acct desc column</entry><entry>varchar(255)</entry><entry>Some ASCII NT user data</entry></row>
+		<row><entry>workstations column</entry><entry>varchar(255)</entry><entry>Workstations user can logon to (or NULL for all)</entry></row>
+		<row><entry>unknown string column</entry><entry>varchar(255)</entry><entry>Unknown string</entry></row>
+		<row><entry>munged dial column</entry><entry>varchar(255)</entry><entry>Unknown</entry></row>
+		<row><entry>user sid column</entry><entry>varchar(255)</entry><entry>NT user SID</entry></row>
+		<row><entry>group sid column</entry><entry>varchar(255)</entry><entry>NT group SID</entry></row>
+		<row><entry>lanman pass column</entry><entry>varchar(255)</entry><entry>Encrypted lanman password</entry></row>
+		<row><entry>nt pass column</entry><entry>varchar(255)</entry><entry>Encrypted nt passwd</entry></row>
+		<row><entry>plain pass column</entry><entry>varchar(255)</entry><entry>Plaintext password</entry></row>
+		<row><entry>acct ctrl column</entry><entry>int(9)</entry><entry>NT user data</entry></row>
+		<row><entry>unknown 3 column</entry><entry>int(9)</entry><entry>Unknown</entry></row>
+		<row><entry>logon divs column</entry><entry>int(9)</entry><entry>Unknown</entry></row>
+		<row><entry>hours len column</entry><entry>int(9)</entry><entry>Unknown</entry></row>
+		<row><entry>bad password count column</entry><entry>int(5)</entry><entry>Number of failed password tries before disabling an account</entry></row>
+		<row><entry>logon count column</entry><entry>int(5)</entry><entry>Number of logon attempts</entry></row>
+		<row><entry>unknown 6 column</entry><entry>int(9)</entry><entry>Unknown</entry></row>
+	</tbody></tgroup>
+</table>
+</para>
+
+	<para>
+	You can put a colon (:) after the name of each column, which 
+	should specify the column to update when updating the table. You can also specify nothing behind the colon, in which case the field data will not be updated. Setting a column name to <parameter>NULL</parameter> means the field should not be used.
+	</para>
+
+	<para><link linkend="mysqlsam">An example configuration</link> is shown in <link
+	linkend="mysqlsam">Example Configuration for the MySQL passdb Backend</link>.
+	</para>
+
+	<example id="mysqlsam">
+	<title>Example Configuration for the MySQL passdb Backend</title>
+
+	<programlisting>
+[global]
+passdb backend = mysql:foo
+foo:mysql user = samba
+foo:mysql password = abmas
+foo:mysql database = samba
+# domain name is static and can't be changed
+foo:domain column = 'MYWORKGROUP':
+# The fullname column comes from several other columns
+foo:fullname column = CONCAT(firstname,' ',surname):
+# Samba should never write to the password columns
+foo:lanman pass column = lm_pass:
+foo:nt pass column = nt_pass:
+# The unknown 3 column is not stored
+foo:unknown 3 column = NULL
+</programlisting>
+	</example>
+</section>
+
+<section>
+<title>Using Plaintext Passwords or Encrypted Password</title>
+
+	<para>
+	The use of plaintext passwords is strongly discouraged; however, you can use them if you really want to.
+	</para>
+
+	<para>
+	If you would like to use plaintext passwords, set
+	`identifier:lanman pass column' and `identifier:nt pass column' to
+	`NULL' (without the quotes) and `identifier:plain pass column' to the
+	name of the column containing the plaintext passwords. 
+	</para>
+
+	<para>
+	If you use encrypted passwords, set the 'identifier:plain pass
+	column' to 'NULL' (without the quotes). This is the default.
+	</para>
+
+</section>
+
+<section>
+<title>Getting Non-Column Data from the Table</title>
+
+	<para>
+	It is possible to have not all data in the database by making some "constant."
+	</para>
+
+	<para>
+	For example, you can set `identifier:fullname column' to
+	something like <command>CONCAT(Firstname,' ',Surname)</command>
+	</para>
+
+	<para>
+	Or, set `identifier:workstations column' to:
+	<command>NULL</command>.</para>
+
+	<para>See the MySQL documentation for more language constructs.</para>
+</section>
+</article>
