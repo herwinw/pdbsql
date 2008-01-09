@@ -1,0 +1,5 @@
+samba-pdbsql (0.01) UNRELEASED; urgency=low
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- Jelmer Vernooij <jelmer@samba.org>  Tue, 21 Mar 2006 01:11:31 +0100
