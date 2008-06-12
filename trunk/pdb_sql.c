@@ -1,6 +1,7 @@
 /*
  * Common PDB SQL backend functions
  * Copyright (C) Jelmer Vernooij 2003-2004
+ * Copyright (C) Collen Blijenberg 2007-2008
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
@@ -503,13 +504,13 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 						   pdb_get_workstations(newpwd));
 	}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_UNKNOWNSTR)) {
+	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_COMMENT)) {
  		some_field_affected = 1;
 		pdb_sql_string_field(query,
 						   config_value_write(location,
 											  "unknown string column",
 											  CONFIG_UNKNOWN_STR_DEFAULT),
-						   pdb_get_workstations(newpwd));
+						   pdb_get_comment(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LMPASSWD)) {

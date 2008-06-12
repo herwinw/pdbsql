@@ -44,6 +44,11 @@
 #define CONFIG_PORT_DEFAULT				DEF_PGPORT_STR
 #define CONFIG_DB_DEFAULT				"samba"
 
+static int pgsqlsam_debug_level = DBGC_ALL;
+
+#undef DBGC_CLASS
+#define DBGC_CLASS pgsqlsam_debug_level
+
 /* handles for doing db transactions */
 typedef struct pdb_pgsql_data {
 	PGconn     *master_handle;
@@ -164,7 +169,7 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 	pdb_set_profile_path         (u, PQgetvalue(r, row, 13), PDB_SET);
 	pdb_set_acct_desc            (u, PQgetvalue(r, row, 14), PDB_SET);
 	pdb_set_workstations         (u, PQgetvalue(r, row, 15), PDB_SET);
-	pdb_set_unknown_str          (u, PQgetvalue(r, row, 16), PDB_SET);
+	pdb_set_comment              (u, PQgetvalue(r, row, 16), PDB_SET);
 	pdb_set_munged_dial          (u, PQgetvalue(r, row, 17), PDB_SET);
  
 	pdb_set_acct_ctrl            (u, PQgetlong (r, row, 23), PDB_SET);
@@ -550,12 +555,21 @@ static BOOL pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid)
 
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)
 {
-	NTSTATUS nt_status;
-	struct pdb_pgsql_data *data = malloc_p(struct pdb_pgsql_data);
-	
-	if (!NT_STATUS_IS_OK(nt_status = make_pdb_method(pdb_method))) {
+	NTSTATUS nt_status
+	  
+	struct pdb_pgsql_data *data;
+
+	pgsqlsam_debug_level = debug_add_class("pgsqlsam");
+	if (pgsqlsam_debug_level == -1) {
+		pgsqlsam_debug_level = DBGC_ALL;
+		DEBUG(0,
+			  ("pgsqlsam: Couldn't register custom debugging class!\n"));
+	}
+
+        if ( !NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method )) ) {
 		return nt_status;
         }
+  
   
 	(*pdb_method)->name               = "pgsqlsam";
   
@@ -569,8 +583,19 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	(*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
 	(*pdb_method)->rid_algorithm      = pgsqlsam_rid_algorithm;
 	(*pdb_method)->new_rid            = pgsqlsam_new_rid;
-  
-  
+
+/*	(*pdb_method)->rename_sam_account = pgsqlsam_rename_sam_account; */
+/*	(*pdb_method)->getgrsid = pgsqlsam_getgrsid; */
+/*	(*pdb_method)->getgrgid = pgsqlsam_getgrgid; */
+/*	(*pdb_method)->getgrnam = pgsqlsam_getgrnam; */
+/*	(*pdb_method)->add_group_mapping_entry = pgsqlsam_add_group_mapping_entry; */
+/*	(*pdb_method)->update_group_mapping_entry = pgsqlsam_update_group_mapping_entry; */
+/*	(*pdb_method)->delete_group_mapping_entry = pgsqlsam_delete_group_mapping_entry; */
+/*	(*pdb_method)->enum_group_mapping = pgsqlsam_enum_group_mapping; */
+/*	(*pdb_method)->get_account_policy = pgsqlsam_get_account_policy; */
+/*	(*pdb_method)->set_account_policy = pgsqlsam_set_account_policy; */  
+/*	(*pdb_method)->get_seq_num = pgsqlsam_get_seq_num; */  
+
 	(*pdb_method)->private_data = data;
 
 	data->master_handle = NULL;

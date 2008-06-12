@@ -118,7 +118,7 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 	pdb_set_profile_path(u, row[13], PDB_SET);
 	pdb_set_acct_desc(u, row[14], PDB_SET);
 	pdb_set_workstations(u, row[15], PDB_SET);
-	pdb_set_unknown_str(u, row[16], PDB_SET);
+	pdb_set_comment(u, row[16], PDB_SET);
 	pdb_set_munged_dial(u, row[17], PDB_SET);
 
 	if(!row[18] || !string_to_sid(&sid, row[18])) {
@@ -558,9 +558,22 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
-	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm;
+
+/*	(*pdb_method)->rename_sam_account = mysqlsam_rename_sam_account; */
+/*	(*pdb_method)->getgrsid = mysqlsam_getgrsid; */
+/*	(*pdb_method)->getgrgid = mysqlsam_getgrgid; */
+/*	(*pdb_method)->getgrnam = mysqlsam_getgrnam; */
+/*	(*pdb_method)->add_group_mapping_entry = mysqlsam_add_group_mapping_entry; */
+/*	(*pdb_method)->update_group_mapping_entry = mysqlsam_update_group_mapping_entry; */
+/*	(*pdb_method)->delete_group_mapping_entry = mysqlsam_delete_group_mapping_entry; */
+/*	(*pdb_method)->enum_group_mapping = mysqlsam_enum_group_mapping; */
+/*	(*pdb_method)->get_account_policy = mysqlsam_get_account_policy; */
+/*	(*pdb_method)->set_account_policy = mysqlsam_set_account_policy; */
+/*	(*pdb_method)->get_seq_num = mysqlsam_get_seq_num; */
+
+	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm; 
 	(*pdb_method)->new_rid = mysqlsam_new_rid;
-	
+
 	data = talloc(*pdb_method, struct pdb_mysql_data);
 	(*pdb_method)->private_data = data;
 	data->handle = NULL;
