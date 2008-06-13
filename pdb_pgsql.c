@@ -555,7 +555,7 @@ static BOOL pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid)
 
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)
 {
-	NTSTATUS nt_status
+	NTSTATUS nt_status;
 	  
 	struct pdb_pgsql_data *data;
 
