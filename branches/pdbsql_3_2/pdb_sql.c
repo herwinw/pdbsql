@@ -189,7 +189,7 @@ static const char * config_value_read(const char *location, const char *name, co
 	return (const char *)v;
 }
 
-char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, BOOL update, enum sql_search_field field, const char *value)
+char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, bool update, enum sql_search_field field, const char *value)
 {
 	const char *field_string;
 	char *query;
@@ -590,7 +590,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 	return ret;
 }
 
-BOOL sql_account_config_valid(const char *data)
+bool sql_account_config_valid(const char *data)
 {
 	const char *sid_column, *username_column;
 	

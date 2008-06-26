@@ -20,9 +20,9 @@
  * TODO
  * * Volker commited Trust domain passwords to be included in the pdb.
  *   These need to be added here:
- *   BOOL get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
- *   BOOL set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
- *   BOOL del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
+ *   bool get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
+ *   bool set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
+ *   bool del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
  *   NTSTATUS enum_trusteddoms(struct pdb_methods *methods, TALLOC_CTX *mem_ctx, uint32 *num_domains, struct trustdom_info ***domains)
  */
 
@@ -166,98 +166,98 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 	return NT_STATUS_OK;
 }
 
-static NTSTATUS mysqlsam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
-{
-	struct pdb_mysql_data *data =
-		(struct pdb_mysql_data *) methods->private_data;
-	char *query;
-	int mysql_ret;
-
-	if (!data || !(data->handle)) {
-		DEBUG(0, ("invalid handle!\n"));
-		return NT_STATUS_INVALID_HANDLE;
-	}
-
-	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
-
-	mysql_ret = mysql_query(data->handle, query);
-	
-	/* [SYN] If the server has gone away, reconnect and retry */
-	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
-		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
-
-		/* [SYN] Reconnect */
-		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
-			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
-			talloc_free(query);
-			return NT_STATUS_UNSUCCESSFUL;
-		}
-		/* [SYN] Retry */
-		mysql_ret = mysql_query(data->handle, query);
-	}
-	
-	talloc_free(query);
-
-	if (mysql_ret) {
-		DEBUG(0,
-			   ("Error executing MySQL query %s\n", mysql_error(data->handle)));
-		return NT_STATUS_UNSUCCESSFUL;
-	}
-
-	data->pwent = mysql_store_result(data->handle);
-
-	if (data->pwent == NULL) {
-		DEBUG(0,
-			("Error storing results: %s\n", mysql_error(data->handle)));
-		return NT_STATUS_UNSUCCESSFUL;
-	}
-	
-	DEBUG(5,
-		("mysqlsam_setsampwent succeeded(%llu results)!\n",
-				mysql_num_rows(data->pwent)));
-	
-	return NT_STATUS_OK;
-}
+//static NTSTATUS mysqlsam_setsampwent(struct pdb_methods *methods, bool update, uint32 acb_mask)
+//{
+//	struct pdb_mysql_data *data =
+//		(struct pdb_mysql_data *) methods->private_data;
+//	char *query;
+//	int mysql_ret;
+//
+//	if (!data || !(data->handle)) {
+//		DEBUG(0, ("invalid handle!\n"));
+//		return NT_STATUS_INVALID_HANDLE;
+//	}
+//
+//	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
+//
+//	mysql_ret = mysql_query(data->handle, query);
+//	
+//	/* [SYN] If the server has gone away, reconnect and retry */
+//	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
+//		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+//
+//		/* [SYN] Reconnect */
+//		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+//			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+//			talloc_free(query);
+//			return NT_STATUS_UNSUCCESSFUL;
+//		}
+//		/* [SYN] Retry */
+//		mysql_ret = mysql_query(data->handle, query);
+//	}
+//	
+//	talloc_free(query);
+//
+//	if (mysql_ret) {
+//		DEBUG(0,
+//			   ("Error executing MySQL query %s\n", mysql_error(data->handle)));
+//		return NT_STATUS_UNSUCCESSFUL;
+//	}
+//
+//	data->pwent = mysql_store_result(data->handle);
+//
+//	if (data->pwent == NULL) {
+//		DEBUG(0,
+//			("Error storing results: %s\n", mysql_error(data->handle)));
+//		return NT_STATUS_UNSUCCESSFUL;
+//	}
+//	
+//	DEBUG(5,
+//		("mysqlsam_setsampwent succeeded(%llu results)!\n",
+//				mysql_num_rows(data->pwent)));
+//	
+//	return NT_STATUS_OK;
+//}
 
 /***************************************************************
   End enumeration of the passwd list.
  ****************************************************************/
 
-static void mysqlsam_endsampwent(struct pdb_methods *methods)
-{
-	struct pdb_mysql_data *data =
-		(struct pdb_mysql_data *) methods->private_data;
-
-	if (data == NULL) {
-		DEBUG(0, ("invalid handle!\n"));
-		return;
-	}
-
-	if (data->pwent != NULL)
-		mysql_free_result(data->pwent);
-
-	data->pwent = NULL;
-
-	DEBUG(5, ("mysql_endsampwent called\n"));
-}
+//static void mysqlsam_endsampwent(struct pdb_methods *methods)
+//{
+//	struct pdb_mysql_data *data =
+//		(struct pdb_mysql_data *) methods->private_data;
+//
+//	if (data == NULL) {
+//		DEBUG(0, ("invalid handle!\n"));
+//		return;
+//	}
+//
+//	if (data->pwent != NULL)
+//		mysql_free_result(data->pwent);
+//
+//	data->pwent = NULL;
+//
+//	DEBUG(5, ("mysql_endsampwent called\n"));
+//}
 
 /*****************************************************************
   Get one struct samu from the list (next in line)
  *****************************************************************/
 
-static NTSTATUS mysqlsam_getsampwent(struct pdb_methods *methods, struct samu * user)
-{
-	struct pdb_mysql_data *data;
-
-	SET_DATA(data, methods);
-
-	if (data->pwent == NULL) {
-		DEBUG(0, ("invalid pwent\n"));
-		return NT_STATUS_INVALID_PARAMETER;
-	}
-
-	return row_to_sam_account(data->pwent, user);
-}
+//static NTSTATUS mysqlsam_getsampwent(struct pdb_methods *methods, struct samu * user)
+//{
+//	struct pdb_mysql_data *data;
+//
+//	SET_DATA(data, methods);
+//
+//	if (data->pwent == NULL) {
+//		DEBUG(0, ("invalid pwent\n"));
+//		return NT_STATUS_INVALID_PARAMETER;
+//	}
+//
+//	return row_to_sam_account(data->pwent, user);
+//}
 
 static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct samu * user,
 						 enum sql_search_field field, const char *sname)
@@ -373,8 +373,9 @@ static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu * 
 
 	SET_DATA(data, methods);
 
-	sid_to_string(sid_str, sid);
-
+//	sid_to_string(sid_str, sid);
+        sid_string_dbg(sid);
+        
 	return mysqlsam_select_by_field(methods, user, SQL_SEARCH_USER_SID, sid_str);
 }
 
@@ -525,10 +526,10 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 	return mysqlsam_replace_sam_account(methods, newpwd, 1);
 }
 
-static BOOL mysqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
+static bool mysqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
 	return True;
 }
-static BOOL mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
+static bool mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
 	return False;
 }
 
@@ -550,9 +551,9 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	
 	(*pdb_method)->name = "mysqlsam";
 
-	(*pdb_method)->setsampwent = mysqlsam_setsampwent;
-	(*pdb_method)->endsampwent = mysqlsam_endsampwent;
-	(*pdb_method)->getsampwent = mysqlsam_getsampwent;
+//	(*pdb_method)->setsampwent = mysqlsam_setsampwent;
+//	(*pdb_method)->endsampwent = mysqlsam_endsampwent;
+//	(*pdb_method)->getsampwent = mysqlsam_getsampwent;
 	(*pdb_method)->getsampwnam = mysqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid = mysqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
