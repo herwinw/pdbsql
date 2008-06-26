@@ -21,9 +21,9 @@
  * TODO
  * * Volker commited Trust domain passwords to be included in the pdb.
  *   These need to be added here:
- *   BOOL get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
- *   BOOL set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
- *   BOOL del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
+ *   bool get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
+ *   bool set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
+ *   bool del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
  *   NTSTATUS enum_trusteddoms(struct pdb_methods *methods, TALLOC_CTX *mem_ctx, uint32 *num_domains, struct trustdom_info ***domains)
  */
 
@@ -228,86 +228,86 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 	return NT_STATUS_OK;
 }
 
-static NTSTATUS pgsqlsam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
-{
-	struct pdb_pgsql_data *data;
-	PGconn *handle;
-	char *query;
-	NTSTATUS retval;
-  
-	SET_DATA(data, methods);
-
-	/* Connect to the DB. */
-	handle = choose_connection(data);
-	if (handle == NULL) {
-		return NT_STATUS_UNSUCCESSFUL;
-	}
-	DEBUG(5, ("CONNECTING pgsqlsam_setsampwent\n"));
-
-	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
-  
-	/* Execute query */
-	DEBUG(5, ("Executing query %s\n", query));
-	data->pwent  = PQexec(handle, query);
-	data->currow = 0;
-  
-	/* Result? */
-	if (data->pwent == NULL) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
-		retval = NT_STATUS_UNSUCCESSFUL;
-	} else if (PQresultStatus(data->pwent) != PGRES_TUPLES_OK) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(data->pwent)));
-		retval = NT_STATUS_UNSUCCESSFUL;
-	} else {
-		DEBUG(5, ("pgsqlsam_setsampwent succeeded(%d results)!\n", PQntuples(data->pwent)));
-		retval = NT_STATUS_OK;
-	}
-
-	talloc_free(query);
-	return retval;
-}
+//static NTSTATUS pgsqlsam_setsampwent(struct pdb_methods *methods, bool update, uint32 acb_mask)
+//{
+//	struct pdb_pgsql_data *data;
+//	PGconn *handle;
+//	char *query;
+//	NTSTATUS retval;
+//
+//	SET_DATA(data, methods);
+//
+//	/* Connect to the DB. */
+//	handle = choose_connection(data);
+//	if (handle == NULL) {
+//		return NT_STATUS_UNSUCCESSFUL;
+//	}
+//	DEBUG(5, ("CONNECTING pgsqlsam_setsampwent\n"));
+//
+//	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
+//
+//	/* Execute query */
+//	DEBUG(5, ("Executing query %s\n", query));
+//	data->pwent  = PQexec(handle, query);
+//      data->currow = 0;
+//
+//	/* Result? */
+//	if (data->pwent == NULL) {
+//		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
+//		retval = NT_STATUS_UNSUCCESSFUL;
+//	} else if (PQresultStatus(data->pwent) != PGRES_TUPLES_OK) {
+//		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(data->pwent)));
+//		retval = NT_STATUS_UNSUCCESSFUL;
+//	} else {
+//		DEBUG(5, ("pgsqlsam_setsampwent succeeded(%d results)!\n", PQntuples(data->pwent)));
+//		retval = NT_STATUS_OK;
+//	}
+//
+//	talloc_free(query);
+//	return retval;
+//}
 
 /***************************************************************
   End enumeration of the passwd list.
  ****************************************************************/
 
-static void pgsqlsam_endsampwent(struct pdb_methods *methods)
-{
-	struct pdb_pgsql_data *data; 
-  
-	SET_DATA_QUIET(data, methods);
-  
-	if (data->pwent != NULL) {
-		PQclear(data->pwent);
-	}
-  
-	data->pwent  = NULL;
-	data->currow = 0;
-  
-	DEBUG(5, ("pgsql_endsampwent called\n"));
-}
+//static void pgsqlsam_endsampwent(struct pdb_methods *methods)
+//{
+//	struct pdb_pgsql_data *data; 
+//
+//	SET_DATA_QUIET(data, methods);
+//  
+//	if (data->pwent != NULL) {
+//		PQclear(data->pwent);
+//	}
+//  
+//	data->pwent  = NULL;
+//	data->currow = 0;
+//  
+//	DEBUG(5, ("pgsql_endsampwent called\n"));
+//}
 
 /*****************************************************************
   Get one struct samu from the list (next in line)
  *****************************************************************/
 
-static NTSTATUS pgsqlsam_getsampwent(struct pdb_methods *methods, struct samu *user)
-{
-	struct pdb_pgsql_data *data;
-	NTSTATUS retval;
-  
-	SET_DATA(data, methods);
-  
-	if (data->pwent == NULL) {
-		DEBUG(0, ("invalid pwent\n"));
-		return NT_STATUS_INVALID_PARAMETER;
-	}
-  
-	retval = row_to_sam_account(data->pwent, data->currow, user);
-	data->currow++;
-  
-	return retval;
-}
+//static NTSTATUS pgsqlsam_getsampwent(struct pdb_methods *methods, struct samu *user)
+//{
+//	struct pdb_pgsql_data *data;
+//	NTSTATUS retval;
+//
+//	SET_DATA(data, methods);
+//  
+//	if (data->pwent == NULL) {
+//		DEBUG(0, ("invalid pwent\n"));
+//		return NT_STATUS_INVALID_PARAMETER;
+//	}
+//  
+//	retval = row_to_sam_account(data->pwent, data->currow, user);
+//	data->currow++;
+//  
+//	return retval;
+//}
 
 static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct samu *user, enum sql_search_field field, const char *sname)
 {
@@ -544,11 +544,11 @@ static NTSTATUS pgsqlsam_update_sam_account(struct pdb_methods *methods, struct 
 	return pgsqlsam_replace_sam_account(methods, newpwd, 1);
 }
 
-static BOOL pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods) 
+static bool pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods) 
 {
 	return True;
 }
-static BOOL pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid) 
+static bool pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid) 
 {
 	return False;
 }
@@ -573,9 +573,9 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
   
 	(*pdb_method)->name               = "pgsqlsam";
   
-	(*pdb_method)->setsampwent        = pgsqlsam_setsampwent;
-	(*pdb_method)->endsampwent        = pgsqlsam_endsampwent;
-	(*pdb_method)->getsampwent        = pgsqlsam_getsampwent;
+//	(*pdb_method)->setsampwent        = pgsqlsam_setsampwent;
+//	(*pdb_method)->endsampwent        = pgsqlsam_endsampwent;
+//	(*pdb_method)->getsampwent        = pgsqlsam_getsampwent;
 	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
