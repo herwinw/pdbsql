@@ -36,3 +36,7 @@ CREATE TABLE user (
 	password_history text default NULL,
 	KEY username(username)
 );
+
+CREATE TABLE group (
+	group varchar(255) default NULL,
+);
