@@ -171,7 +171,7 @@ static bool multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
 /* Tries sid_to_id on every backend until one succeeds, returns true on success */
 static bool multisam_sid_to_id(struct pdb_methods *methods,
 				  const DOM_SID *sid,
-				  union unid_t *id, enum SID_NAME_USE *type)
+				  union unid_t *id, enum lsa_SidType *type)
 {
 	short i;
 	struct multisam_data *data;
@@ -755,7 +755,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	}
 
 	data->location = talloc_strdup(data, location);
-	data->names = str_list_make_talloc(data, data->location, NULL);
+//	data->names = str_list_make_talloc(data, data->location, NULL);
 	data->num_backends = str_list_count((const char **)data->names);
 	data->locations = talloc_array(data, char *, data->num_backends);
 	data->methods = talloc_array(data, struct pdb_methods *, data->num_backends);

@@ -415,7 +415,7 @@ static NTSTATUS pgsqlsam_getsampwsid(struct pdb_methods *methods, struct samu *u
   
 	SET_DATA(data, methods);
   
-	sid_to_string(sid_str, sid);
+	sid_to_fstring(sid_str, sid);
   
 	return pgsqlsam_select_by_field(methods, user, SQL_SEARCH_USER_SID, sid_str);
 }
@@ -596,6 +596,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 /*	(*pdb_method)->set_account_policy = pgsqlsam_set_account_policy; */  
 /*	(*pdb_method)->get_seq_num = pgsqlsam_get_seq_num; */  
 
+	data = talloc(*pdb_method, struct pdb_pgsql_data);
 	(*pdb_method)->private_data = data;
 
 	data->master_handle = NULL;

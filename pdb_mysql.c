@@ -559,6 +559,8 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
+	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm; 
+	(*pdb_method)->new_rid = mysqlsam_new_rid;
 
 /*	(*pdb_method)->rename_sam_account = mysqlsam_rename_sam_account; */
 /*	(*pdb_method)->getgrsid = mysqlsam_getgrsid; */
@@ -571,9 +573,6 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 /*	(*pdb_method)->get_account_policy = mysqlsam_get_account_policy; */
 /*	(*pdb_method)->set_account_policy = mysqlsam_set_account_policy; */
 /*	(*pdb_method)->get_seq_num = mysqlsam_get_seq_num; */
-
-	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm; 
-	(*pdb_method)->new_rid = mysqlsam_new_rid;
 
 	data = talloc(*pdb_method, struct pdb_mysql_data);
 	(*pdb_method)->private_data = data;
