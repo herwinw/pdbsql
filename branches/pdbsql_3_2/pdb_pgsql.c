@@ -573,9 +573,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
   
 	(*pdb_method)->name               = "pgsqlsam";
   
-//	(*pdb_method)->setsampwent        = pgsqlsam_setsampwent;
-//	(*pdb_method)->endsampwent        = pgsqlsam_endsampwent;
-//	(*pdb_method)->getsampwent        = pgsqlsam_getsampwent;
+//	(*pdb_method)->search_users       = pgsqlsam_search_users;
 	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
@@ -631,7 +629,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	return NT_STATUS_OK;
 }
 
-NTSTATUS init_module(void)
+NTSTATUS init_samba_module(void)
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "pgsql", pgsqlsam_init);
 }
