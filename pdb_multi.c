@@ -702,6 +702,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 //	(*pdb_method)->setsampwent = multisam_setsampwent;
 //	(*pdb_method)->endsampwent = multisam_endsampwent;
 //	(*pdb_method)->getsampwent = multisam_getsampwent;
+//	(*pdb_method)->search_users = multisam_search_users;
 	(*pdb_method)->getsampwnam = multisam_getsampwnam;
 	(*pdb_method)->getsampwsid = multisam_getsampwsid;
 	(*pdb_method)->add_sam_account = multisam_add_sam_account;
@@ -744,7 +745,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->get_account_policy = multisam_get_account_policy;
 	(*pdb_method)->set_account_policy = multisam_set_account_policy;
 	(*pdb_method)->get_seq_num = multisam_get_seq_num;
-	(*pdb_method)->search_users = multisam_search_users;
+//	(*pdb_method)->search_users = multisam_search_users;
 	(*pdb_method)->search_groups = multisam_search_groups;
 	(*pdb_method)->search_aliases = multisam_search_aliases;
 #endif
@@ -799,7 +800,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	return NT_STATUS_OK;
 }
 
-NTSTATUS init_module(void) 
+NTSTATUS init_samba_module(void) 
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "multi", multisam_init);
 }

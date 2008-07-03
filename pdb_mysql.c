@@ -533,6 +533,116 @@ static bool mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
 	return False;
 }
 
+/****************************/
+struct mysqlsam_search_state {
+	uint32_t acct_flags;
+
+	struct samr_displayentry *entries;
+	uint32_t num_entries;
+	ssize_t array_size;
+	uint32_t current;
+};
+/****************************/
+static void mysqlsam_search_end(struct pdb_search *search)
+{
+	struct mysqlsam_search_state *state = talloc_get_type_abort(
+		search->private_data, struct mysqlsam_search_state);
+	TALLOC_FREE(state);
+}
+/****************************/
+static bool mysqlsam_search_next_entry(struct pdb_search *search,
+					struct samr_displayentry *entry)
+{
+	struct mysqlsam_search_state *state = talloc_get_type_abort(
+		search->private_data, struct mysqlsam_search_state);
+
+	if (state->current == state->num_entries) {
+		return false;
+	}
+
+	entry->idx = state->entries[state->current].idx;
+	entry->rid = state->entries[state->current].rid;
+	entry->acct_flags = state->entries[state->current].acct_flags;
+
+	entry->account_name = talloc_strdup(
+		search->mem_ctx, state->entries[state->current].account_name);
+	entry->fullname = talloc_strdup(
+		search->mem_ctx, state->entries[state->current].fullname);
+	entry->description = talloc_strdup(
+		search->mem_ctx, state->entries[state->current].description);
+
+	if ((entry->account_name == NULL) || (entry->fullname == NULL)
+	    || (entry->description == NULL)) {
+		DEBUG(0, ("talloc_strdup failed\n"));
+		return false;
+	}
+
+	state->current += 1;
+	return true;
+}
+/****************************/
+static bool mysqlsam_search_users(struct pdb_methods *methods,
+				struct pdb_search *search,
+				uint32 acct_flags,
+				bool update)
+{
+	struct pdb_mysql_data *data =
+		(struct pdb_mysql_data *) methods->private_data;
+        char *query;
+        int mysql_ret;
+	struct mysqlsam_search_state *state;
+
+	state = TALLOC_ZERO_P(search->mem_ctx, struct mysqlsam_search_state);
+	if (state == NULL) {
+		DEBUG(0, ("talloc failed\n"));
+		return false;
+	}
+
+	state->acct_flags = acct_flags;
+//
+	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
+
+	mysql_ret = mysql_query(data->handle, query);
+	
+//	/* [SYN] If the server has gone away, reconnect and retry */
+	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
+		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+
+//		/* [SYN] Reconnect */
+		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+			talloc_free(query);
+			return false;
+		}
+//		/* [SYN] Retry */
+		mysql_ret = mysql_query(data->handle, query);
+	}
+	
+	talloc_free(query);
+
+	if (mysql_ret) {
+		DEBUG(0,
+			   ("Error executing MySQL query %s\n", mysql_error(data->handle)));
+		return false;
+	}
+// klopt nie !
+	data->pwent = mysql_store_result(data->handle);
+
+	if (data->pwent == NULL) {
+		DEBUG(0,
+			("Error storing results: %s\n", mysql_error(data->handle)));
+		return false;
+	}
+//	state->methods = methods;
+//	db_sam->traverse_read(db_sam, tdbsam_collect_rids, state);
+//
+	search->private_data = state;
+	search->next_entry = mysqlsam_search_next_entry;
+	search->search_end = mysqlsam_search_end;
+
+	return true;
+}
+
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
@@ -541,19 +651,16 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	mysqlsam_debug_level = debug_add_class("mysqlsam");
 	if (mysqlsam_debug_level == -1) {
 		mysqlsam_debug_level = DBGC_ALL;
-		DEBUG(0,
-			  ("mysqlsam: Couldn't register custom debugging class!\n"));
+		DEBUG(0,("mysqlsam: Couldn't register custom debugging class!\n"));
 	}
 
-        if ( !NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method )) ) {
+        if (!NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method ))) {
 		return nt_status;
         }
 	
 	(*pdb_method)->name = "mysqlsam";
 
-//	(*pdb_method)->setsampwent = mysqlsam_setsampwent;
-//	(*pdb_method)->endsampwent = mysqlsam_endsampwent;
-//	(*pdb_method)->getsampwent = mysqlsam_getsampwent;
+	(*pdb_method)->search_users = mysqlsam_search_users;
 	(*pdb_method)->getsampwnam = mysqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid = mysqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
@@ -611,8 +718,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	return NT_STATUS_OK;
 }
 
-NTSTATUS init_module(void) 
+NTSTATUS init_samba_module(void) 
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "mysql", mysqlsam_init);
 }
-
