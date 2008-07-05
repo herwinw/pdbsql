@@ -65,6 +65,14 @@ typedef struct pdb_pgsql_data {
 	const char *location;
 } pdb_pgsql_data;
 
+/* Store the data needed for the _search_next_entry iterator */
+typedef struct pdb_pgsql_search_state {
+	uint32_t acct_flags;
+
+	PGresult *pwent;
+	long currow;
+} pdb_pgsql_search_state;
+
 #define SET_DATA(data,methods) { \
 	if(!methods){ \
 		DEBUG(0, ("invalid methods!\n")); \
@@ -553,6 +561,116 @@ static bool pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid)
 	return False;
 }
 
+/* Iterate through search results, if a new entry is available: store in
+ * entry and return True. Otherwise: return False
+ */
+static bool pgsqlsam_search_next_entry(struct pdb_search *search,
+		struct samr_displayentry *entry)
+{
+	struct pdb_pgsql_search_state *search_state;
+	DOM_SID sid;
+	PGresult *r;
+	long row;
+
+	search_state = (struct pdb_pgsql_search_state *)search->private_data;
+	r = search_state->pwent;
+	row = search_state->currow;
+
+	if (r == NULL) {
+		DEBUG(0, ("invalid query result pointer\n"));
+		return False;
+	}
+
+	if (row >= PQntuples(r)) {
+		/* We've reached the end */
+		return False;
+	}
+	
+	/* Now why do we need to fill entry as rid is enough? Okay, it is a bit
+	 * of a hack, but I don't see the point in filling everything when we
+	 * never read it.
+	 */ 
+	if (!PQgetisnull(r, row, 18)) {
+		string_to_sid(&sid, PQgetvalue(r, row, 18));
+		entry->rid = sid.sub_auths[4];
+	}
+
+	search_state->currow++;
+
+	return True;
+}
+
+/* Free the memory after a search, reset some default values */
+static void pgsqlsam_search_end(struct pdb_search *search)
+{
+	struct pdb_pgsql_search_state *search_state;
+
+	search_state = (struct pdb_pgsql_search_state *)search->private_data;
+
+	if (search_state->pwent != NULL) {
+		PQclear(search_state->pwent);
+	}
+
+	search_state->pwent = NULL;
+	search_state->currow = 0;
+
+	DEBUG(5, ("pgsqlsam_search_end called\n"));
+}
+
+/* Prepare a search object for iterating through the users */
+static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
+		struct pdb_search *search, uint32_t acct_flags)
+{
+	struct pdb_pgsql_data *data;
+	struct pdb_pgsql_search_state *search_state;
+	PGconn *handle;
+	char *query;
+
+	data = (struct pdb_pgsql_data *) pdb_methods->private_data;
+  
+	search_state = TALLOC_ZERO_P(search->mem_ctx, struct pdb_pgsql_search_state);
+	if (search_state == NULL) {
+		DEBUG(0, ("talloc failed\n"));
+		return False;
+	}
+	search_state->acct_flags = acct_flags;
+
+	if (!pdb_methods) {
+		DEBUG(0, ("invalid methods!\n"));
+		return False;
+	}
+
+	handle = choose_connection(data);
+	if (handle == NULL) {
+		DEBUG(0, ("Unable to obtain handle\n"));
+		return False;
+	}
+
+	/* The query to select all the users */
+	query = sql_account_query_select(NULL, data->location, False, SQL_SEARCH_NONE, NULL);
+
+	DEBUG(5, ("Executing query: %s\n", query));
+	search_state->pwent = PQexec(handle, query);
+	search_state->currow = 0;
+	talloc_free(query);
+
+	/* Check results */
+	if (search_state->pwent == NULL) {
+		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
+		return False;
+	} else if (PQresultStatus(search_state->pwent) != PGRES_TUPLES_OK) {
+		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(search_state->pwent)));
+		return False;
+	} else {
+		DEBUG(5, ("pgsqlsam_search_users succeeded(%d results)!\n", PQntuples(search_state->pwent)));
+	}
+	search->private_data = search_state;
+	search->next_entry = pgsqlsam_search_next_entry;
+	search->search_end = pgsqlsam_search_end;
+  
+	return True;
+}
+
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
@@ -573,7 +691,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
   
 	(*pdb_method)->name               = "pgsqlsam";
   
-//	(*pdb_method)->search_users       = pgsqlsam_search_users;
+	(*pdb_method)->search_users       = pgsqlsam_search_users;
 	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
@@ -633,3 +751,10 @@ NTSTATUS init_samba_module(void)
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "pgsql", pgsqlsam_init);
 }
+
+/* For backwards compatibility with either 3.2.0~r2 or Debian */
+NTSTATUS init_module(void)
+{
+	return init_samba_module();
+}
+
