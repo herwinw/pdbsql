@@ -236,87 +236,6 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 	return NT_STATUS_OK;
 }
 
-//static NTSTATUS pgsqlsam_setsampwent(struct pdb_methods *methods, bool update, uint32 acb_mask)
-//{
-//	struct pdb_pgsql_data *data;
-//	PGconn *handle;
-//	char *query;
-//	NTSTATUS retval;
-//
-//	SET_DATA(data, methods);
-//
-//	/* Connect to the DB. */
-//	handle = choose_connection(data);
-//	if (handle == NULL) {
-//		return NT_STATUS_UNSUCCESSFUL;
-//	}
-//	DEBUG(5, ("CONNECTING pgsqlsam_setsampwent\n"));
-//
-//	query = sql_account_query_select(NULL, data->location, update, SQL_SEARCH_NONE, NULL);
-//
-//	/* Execute query */
-//	DEBUG(5, ("Executing query %s\n", query));
-//	data->pwent  = PQexec(handle, query);
-//      data->currow = 0;
-//
-//	/* Result? */
-//	if (data->pwent == NULL) {
-//		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
-//		retval = NT_STATUS_UNSUCCESSFUL;
-//	} else if (PQresultStatus(data->pwent) != PGRES_TUPLES_OK) {
-//		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(data->pwent)));
-//		retval = NT_STATUS_UNSUCCESSFUL;
-//	} else {
-//		DEBUG(5, ("pgsqlsam_setsampwent succeeded(%d results)!\n", PQntuples(data->pwent)));
-//		retval = NT_STATUS_OK;
-//	}
-//
-//	talloc_free(query);
-//	return retval;
-//}
-
-/***************************************************************
-  End enumeration of the passwd list.
- ****************************************************************/
-
-//static void pgsqlsam_endsampwent(struct pdb_methods *methods)
-//{
-//	struct pdb_pgsql_data *data; 
-//
-//	SET_DATA_QUIET(data, methods);
-//  
-//	if (data->pwent != NULL) {
-//		PQclear(data->pwent);
-//	}
-//  
-//	data->pwent  = NULL;
-//	data->currow = 0;
-//  
-//	DEBUG(5, ("pgsql_endsampwent called\n"));
-//}
-
-/*****************************************************************
-  Get one struct samu from the list (next in line)
- *****************************************************************/
-
-//static NTSTATUS pgsqlsam_getsampwent(struct pdb_methods *methods, struct samu *user)
-//{
-//	struct pdb_pgsql_data *data;
-//	NTSTATUS retval;
-//
-//	SET_DATA(data, methods);
-//  
-//	if (data->pwent == NULL) {
-//		DEBUG(0, ("invalid pwent\n"));
-//		return NT_STATUS_INVALID_PARAMETER;
-//	}
-//  
-//	retval = row_to_sam_account(data->pwent, data->currow, user);
-//	data->currow++;
-//  
-//	return retval;
-//}
-
 static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct samu *user, enum sql_search_field field, const char *sname)
 {
 	struct pdb_pgsql_data *data;
@@ -699,18 +618,6 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	(*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
 	(*pdb_method)->rid_algorithm      = pgsqlsam_rid_algorithm;
 	(*pdb_method)->new_rid            = pgsqlsam_new_rid;
-
-/*	(*pdb_method)->rename_sam_account = pgsqlsam_rename_sam_account; */
-/*	(*pdb_method)->getgrsid = pgsqlsam_getgrsid; */
-/*	(*pdb_method)->getgrgid = pgsqlsam_getgrgid; */
-/*	(*pdb_method)->getgrnam = pgsqlsam_getgrnam; */
-/*	(*pdb_method)->add_group_mapping_entry = pgsqlsam_add_group_mapping_entry; */
-/*	(*pdb_method)->update_group_mapping_entry = pgsqlsam_update_group_mapping_entry; */
-/*	(*pdb_method)->delete_group_mapping_entry = pgsqlsam_delete_group_mapping_entry; */
-/*	(*pdb_method)->enum_group_mapping = pgsqlsam_enum_group_mapping; */
-/*	(*pdb_method)->get_account_policy = pgsqlsam_get_account_policy; */
-/*	(*pdb_method)->set_account_policy = pgsqlsam_set_account_policy; */  
-/*	(*pdb_method)->get_seq_num = pgsqlsam_get_seq_num; */  
 
 	data = talloc(*pdb_method, struct pdb_pgsql_data);
 	(*pdb_method)->private_data = data;

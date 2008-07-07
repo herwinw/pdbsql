@@ -422,7 +422,6 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 						   config_value_write(location, "group sid column",
 											  CONFIG_GROUP_SID_DEFAULT),
 						   sid_to_fstring(sid_str,
-//						   sid_string_dbg(sid,
 										 pdb_get_group_sid(newpwd)));
 	}
 
@@ -582,7 +581,6 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 					  "user sid column",
 					  CONFIG_USER_SID_DEFAULT),
 			sid_to_fstring(sid_str, pdb_get_user_sid (newpwd)));
-//			sid_string_dbg(pdb_get_user_sid (newpwd)));			
 	} else {
 		query->part2[strlen(query->part2) - 1] = ')';
 		query->part1[strlen(query->part1) - 1] = ')';
