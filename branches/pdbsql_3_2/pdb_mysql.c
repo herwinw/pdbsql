@@ -444,10 +444,46 @@ struct mysqlsam_search_state {
 	uint32_t acct_flags;
 
 	MYSQL_RES *pwent;
+//	struct samr_displayentry *entries;
 	uint32_t num_entries;
 	uint32_t current;
 };
+/****************************/
+static bool mysqlsam_search_next_entry(struct pdb_search *search,
+					struct samr_displayentry *entry)
+{
+	struct mysqlsam_search_state *state = talloc_get_type_abort(
+		search->private_data, struct mysqlsam_search_state);
+	MYSQL_ROW row;
+	DOM_SID sid;
+	struct samu *user = NULL;
 
+	if (state->current >= state->num_entries) {
+		return false;
+	}
+
+
+
+	row = mysql_fetch_row(state->pwent);
+	if (row[18]) {
+		string_to_sid(&sid, row[18]);
+		entry->rid = sid.sub_auths[4];
+	}
+
+	entry->acct_flags = talloc_strdup(search->mem_ctx,row[23]);
+        entry->account_name = talloc_strdup(search->mem_ctx,row[6]);
+        entry->fullname = talloc_strdup(search->mem_ctx,row[9]);
+        entry->description = talloc_strdup(search->mem_ctx,row[14]);
+        
+	state->current += 1;
+ 	TALLOC_FREE(user);
+
+	if ((entry->account_name == NULL)) {
+		DEBUG(0, ("talloc_strdup failed\n"));
+		return false;
+	}
+	return true;
+}
 /****************************/
 static void mysqlsam_search_end(struct pdb_search *search)
 {
@@ -459,27 +495,6 @@ static void mysqlsam_search_end(struct pdb_search *search)
 	DEBUG(5, ("End of entries reached\n"));
 }
 /****************************/
-static bool mysqlsam_search_next_entry(struct pdb_search *search,
-					struct samr_displayentry *entry)
-{
-	struct mysqlsam_search_state *state = talloc_get_type_abort(
-		search->private_data, struct mysqlsam_search_state);
-	MYSQL_ROW row;
-	DOM_SID sid;
-
-	if (state->current >= state->num_entries) {
-		return false;
-	}
-
-	row = mysql_fetch_row(state->pwent);
-	if (row[18]) {
-		string_to_sid(&sid, row[18]);
-		entry->rid = sid.sub_auths[4];
-	}
-
-	state->current += 1;
-	return true;
-}
 /* Enum user list*/
 static bool mysqlsam_search_users(struct pdb_methods *methods,
 				struct pdb_search *search,
