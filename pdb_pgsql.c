@@ -514,7 +514,17 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 		entry->rid = sid.sub_auths[4];
 	}
 
+	entry->acct_flags = atoi(PQgetvalue(r, row, 23));
+	entry->account_name = talloc_strdup(search->mem_ctx, PQgetvalue(r, row, 6));
+	entry->fullname = talloc_strdup(search->mem_ctx, PQgetvalue(r, row, 9));
+	entry->description = talloc_strdup(search->mem_ctx, PQgetvalue(r, row, 14));
+
 	search_state->currow++;
+
+	if ((entry->account_name == NULL)) {
+		DEBUG(0, ("talloc_strdup failed\n"));
+		return False;
+	}
 
 	return True;
 }
@@ -532,6 +542,8 @@ static void pgsqlsam_search_end(struct pdb_search *search)
 
 	search_state->pwent = NULL;
 	search_state->currow = 0;
+
+	talloc_free(search);
 
 	DEBUG(5, ("pgsqlsam_search_end called\n"));
 }
