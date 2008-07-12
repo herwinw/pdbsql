@@ -456,7 +456,6 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 		search->private_data, struct mysqlsam_search_state);
 	MYSQL_ROW row;
 	DOM_SID sid;
-	struct samu *user = NULL;
 
 	if (state->current >= state->num_entries) {
 		return false;
@@ -470,13 +469,12 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 		entry->rid = sid.sub_auths[4];
 	}
 
-	entry->acct_flags = talloc_strdup(search->mem_ctx,row[23]);
-        entry->account_name = talloc_strdup(search->mem_ctx,row[6]);
-        entry->fullname = talloc_strdup(search->mem_ctx,row[9]);
-        entry->description = talloc_strdup(search->mem_ctx,row[14]);
+	entry->acct_flags = atoi(row[23]);
+	entry->account_name = talloc_strdup(search->mem_ctx,row[6]);
+	entry->fullname = talloc_strdup(search->mem_ctx,row[9]);
+	entry->description = talloc_strdup(search->mem_ctx,row[14]);
         
 	state->current += 1;
- 	TALLOC_FREE(user);
 
 	if ((entry->account_name == NULL)) {
 		DEBUG(0, ("talloc_strdup failed\n"));
