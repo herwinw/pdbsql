@@ -526,7 +526,7 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 		return False;
 	}
 
-	if (!(entry->acct_flags & search_state->acct_flags)) {
+	if ((entry->acct_flags & search_state->acct_flags) != search_state->acct_flags) {
 		return pgsqlsam_search_next_entry(search, entry);
  
 	}
