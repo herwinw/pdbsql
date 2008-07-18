@@ -37,3 +37,7 @@ CREATE TABLE users (
 	UNIQUE (username),
 	UNIQUE (nt_username)
 );
+
+CREATE TABLE groups (
+	groupname varchar(255) default NULL
+);
