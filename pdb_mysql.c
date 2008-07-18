@@ -481,7 +481,7 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 		return false;
 	}
 
-	if (!(entry->acct_flags & state->acct_flags)) {
+	if ((entry->acct_flags & state->acct_flags) != state->acct_flags) {
 		return mysqlsam_search_next_entry(search, entry);
  
 	}
