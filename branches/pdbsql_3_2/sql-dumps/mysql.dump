@@ -37,6 +37,6 @@ CREATE TABLE user (
 	KEY username(username)
 );
 
-CREATE TABLE group (
-	group varchar(255) default NULL,
+CREATE TABLE groups (
+	groupname varchar(255) default NULL
 );
