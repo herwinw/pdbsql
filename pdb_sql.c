@@ -5,7 +5,7 @@
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -19,6 +19,9 @@
  */
 
 #include "pdb_sql.h"
+
+#undef DBGC_CLASS
+#define DBGC_CLASS DBGC_PASSDB
 
 #define CONFIG_TABLE_DEFAULT				"user"
 #define CONFIG_LOGON_TIME_DEFAULT			"logon_time"
@@ -189,7 +192,7 @@ static const char * config_value_read(const char *location, const char *name, co
 	return (const char *)v;
 }
 
-char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, BOOL update, enum sql_search_field field, const char *value)
+char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, bool update, enum sql_search_field field, const char *value)
 {
 	const char *field_string;
 	char *query;
@@ -298,7 +301,7 @@ char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data, const char
 char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct samu *newpwd, char isupdate)
 {
 	char *ret;
-	pstring temp;
+	fstring temp;
 	fstring sid_str;
 	pdb_sql_query *query;
  	int some_field_affected = 0;
@@ -408,8 +411,9 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 		pdb_sql_string_field(query,
 						   config_value_write(location, "user sid column",
 											  CONFIG_USER_SID_DEFAULT),
-						   sid_to_string(sid_str, 
-										 pdb_get_user_sid(newpwd)));
+						   sid_to_fstring(sid_str, 
+//						   sid_string_dbg(sid, 
+						   				 pdb_get_user_sid(newpwd)));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_GROUPSID)) {
@@ -417,7 +421,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 		pdb_sql_string_field(query,
 						   config_value_write(location, "group sid column",
 											  CONFIG_GROUP_SID_DEFAULT),
-						   sid_to_string(sid_str,
+						   sid_to_fstring(sid_str,
 										 pdb_get_group_sid(newpwd)));
 	}
 
@@ -576,7 +580,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 			config_value_read(location,
 					  "user sid column",
 					  CONFIG_USER_SID_DEFAULT),
-			sid_to_string(sid_str, pdb_get_user_sid (newpwd)));
+			sid_to_fstring(sid_str, pdb_get_user_sid (newpwd)));
 	} else {
 		query->part2[strlen(query->part2) - 1] = ')';
 		query->part1[strlen(query->part1) - 1] = ')';
@@ -590,7 +594,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 	return ret;
 }
 
-BOOL sql_account_config_valid(const char *data)
+bool sql_account_config_valid(const char *data)
 {
 	const char *sid_column, *username_column;
 	

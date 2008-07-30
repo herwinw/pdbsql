@@ -5,7 +5,7 @@
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -20,9 +20,9 @@
  * TODO
  * * Volker commited Trust domain passwords to be included in the pdb.
  *   These need to be added here:
- *   BOOL get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
- *   BOOL set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
- *   BOOL del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
+ *   bool get_trusteddom_pw(struct pdb_methods *methods, const char *domain, char **pwd, DOM_SID *sid, time_t *pass_last_set_time)
+ *   bool set_trusteddom_pw(struct pdb_methods *methods, const char *domain, const char *pwd, const DOM_SID *sid)
+ *   bool del_trusteddom_pw(struct pdb_methods *methods, const char *domain)
  *   NTSTATUS enum_trusteddoms(struct pdb_methods *methods, TALLOC_CTX *mem_ctx, uint32 *num_domains, struct trustdom_info ***domains)
  */
 
@@ -54,7 +54,7 @@ typedef struct multisam_data {
 }
 #define IS_DEFAULT(methods, function) ((*(data->default_methods)->function) == (*(methods)->function))
 
-static BOOL multisam_new_rid(struct pdb_methods *methods,
+static bool multisam_new_rid(struct pdb_methods *methods,
 				uint32 *rid,
 				short backend) 
 {
@@ -85,20 +85,20 @@ static BOOL multisam_new_rid(struct pdb_methods *methods,
 }
 
 #if 0
-static BOOL multisam_search_groups(struct pdb_methods *methods,
+static bool multisam_search_groups(struct pdb_methods *methods,
 				      struct pdb_search *search)
 {
 	return False;
 }
 
-static BOOL multisam_search_aliases(struct pdb_methods *methods,
+static bool multisam_search_aliases(struct pdb_methods *methods,
 				       struct pdb_search *search,
 				       const DOM_SID *sid)
 {
 	return False;
 }
 
-static BOOL multisam_search_users(struct pdb_methods *methods,
+static bool multisam_search_users(struct pdb_methods *methods,
 				     struct pdb_search *search,
 				     uint32 acct_flags)
 {
@@ -125,12 +125,12 @@ static NTSTATUS multisam_get_seq_num(struct pdb_methods *methods, time_t *seq_nu
 #endif
 
 /* Tries uid_to_rid on every backend until one succeeds, returns true on success */
-static BOOL multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
+static bool multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
 				   uint32 *rid)
 {
 	short i;
 	struct multisam_data *data;
-	BOOL rv;
+	bool rv;
 	
 	if (!methods) return False;
 	data = (struct multisam_data *)methods->private_data;
@@ -147,12 +147,12 @@ static BOOL multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
 }
 
 /* Tries gid_to_sid on every backend until one succeeds, returns true on success */
-static BOOL multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
+static bool multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
 				   DOM_SID *sid)
 {
 	short i;
 	struct multisam_data *data;
-	BOOL rv;
+	bool rv;
 	
 	if (!methods) return False;
 	data = (struct multisam_data *)methods->private_data;
@@ -169,13 +169,13 @@ static BOOL multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
 }
 
 /* Tries sid_to_id on every backend until one succeeds, returns true on success */
-static BOOL multisam_sid_to_id(struct pdb_methods *methods,
+static bool multisam_sid_to_id(struct pdb_methods *methods,
 				  const DOM_SID *sid,
-				  union unid_t *id, enum SID_NAME_USE *type)
+				  union unid_t *id, enum lsa_SidType *type)
 {
 	short i;
 	struct multisam_data *data;
-	BOOL rv;
+	bool rv;
 	
 	if (!methods) return False;
 	data = (struct multisam_data *)methods->private_data;
@@ -273,7 +273,7 @@ static NTSTATUS multisam_delete_dom_group(struct pdb_methods *methods,
 }
 
 
-static NTSTATUS multisam_update_login_attempts (struct pdb_methods *methods, struct samu *newpwd, BOOL success)
+static NTSTATUS multisam_update_login_attempts (struct pdb_methods *methods, struct samu *newpwd, bool success)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
@@ -363,7 +363,7 @@ static NTSTATUS multisam_delete_group_mapping_entry(struct pdb_methods *methods,
 static NTSTATUS multisam_enum_group_mapping(struct pdb_methods *methods,
 					   const DOM_SID *sid, enum SID_NAME_USE sid_name_use,
 					   GROUP_MAP **pp_rmap, size_t *p_num_entries,
-					   BOOL unix_only)
+					   bool unix_only)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
@@ -442,67 +442,67 @@ static NTSTATUS multisam_alias_memberships(struct pdb_methods *methods,
 #endif
 
 /* Creates user list in every backend */
-static NTSTATUS multisam_setsampwent(struct pdb_methods *methods, BOOL update, uint32 acb_mask)
-{
-	short i;
-	struct multisam_data *data;
-	NTSTATUS ret;
-
-	SET_DATA(data, methods);
-	
-	DEBUG(1, ("Setsampwent executing..\n"));
-
-	for (i = 0; i < data->num_backends; i++) {
-		ret = data->methods[i]->setsampwent(data->methods[i], update, acb_mask);
-		if (!NT_STATUS_IS_OK(ret)) {
-			return ret;
-		}
-	}
-	
-	return NT_STATUS_OK;
-}
+//static NTSTATUS multisam_setsampwent(struct pdb_methods *methods, bool update, uint32 acb_mask)
+//{
+//	short i;
+//	struct multisam_data *data;
+//	NTSTATUS ret;
+//
+//	SET_DATA(data, methods);
+//	
+//	DEBUG(1, ("Setsampwent executing..\n"));
+//
+//	for (i = 0; i < data->num_backends; i++) {
+//		ret = data->methods[i]->setsampwent(data->methods[i], update, acb_mask);
+//		if (!NT_STATUS_IS_OK(ret)) {
+//			return ret;
+//		}
+//	}
+//	
+//	return NT_STATUS_OK;
+//}
 
 /***************************************************************
   End enumeration of the passwd list.
  ****************************************************************/
 /* Runs endsampwent on every backend */
-static void multisam_endsampwent(struct pdb_methods *methods)
-{
-	short i;
-	struct multisam_data *data;
-
-	if (!methods) return;
-	data = (struct multisam_data *)methods->private_data;
-	if (!data) return;
-
-	DEBUG(1, ("Freeing pwent results on multisam backends\n"));
-	
-	for (i = 0; i < data->num_backends; i++) {
-		data->methods[i]->endsampwent(data->methods[i]);
-	}
-}
+//static void multisam_endsampwent(struct pdb_methods *methods)
+//{
+//	short i;
+//	struct multisam_data *data;
+//
+//	if (!methods) return;
+//	data = (struct multisam_data *)methods->private_data;
+//	if (!data) return;
+//
+//	DEBUG(1, ("Freeing pwent results on multisam backends\n"));
+//	
+//	for (i = 0; i < data->num_backends; i++) {
+//		data->methods[i]->endsampwent(data->methods[i]);
+//	}
+//}
 
 /*****************************************************************
   Get one struct samu from the list (next in line)
  *****************************************************************/
 /* Reads every user from backend 0, then 1.. etc (returns one) */
-static NTSTATUS multisam_getsampwent(struct pdb_methods *methods, struct samu * user)
-{
-	short i;
-	struct multisam_data *data;
-	NTSTATUS ret;
-	
-	SET_DATA(data, methods);
-	
-	for (i = 0; i < data->num_backends; i++) {
-		ret = data->methods[i]->getsampwent(data->methods[i], user);
-		if (NT_STATUS_IS_OK(ret)) {
-			return ret;
-		}
-	}
-	
-	return NT_STATUS_INVALID_PARAMETER;
-}
+//static NTSTATUS multisam_getsampwent(struct pdb_methods *methods, struct samu * user)
+//{
+//	short i;
+//	struct multisam_data *data;
+//	NTSTATUS ret;
+//	
+//	SET_DATA(data, methods);
+//	
+//	for (i = 0; i < data->num_backends; i++) {
+//		ret = data->methods[i]->getsampwent(data->methods[i], user);
+//		if (NT_STATUS_IS_OK(ret)) {
+//			return ret;
+//		}
+//	}
+//	
+//	return NT_STATUS_INVALID_PARAMETER;
+//}
 
 /******************************************************************
   Lookup a name in the SAM database
@@ -659,12 +659,12 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 #endif
 
 /* The rid algorithm of the first backend is used. */
-static BOOL multisam_rid_algorithm (struct pdb_methods *methods)
+static bool multisam_rid_algorithm (struct pdb_methods *methods)
 {
 	return True;
 }
 /* This function is a fallback for errors */
-static BOOL multisam_dummy_new_rid (struct pdb_methods *methods, uint32 *rid)
+static bool multisam_dummy_new_rid (struct pdb_methods *methods, uint32 *rid)
 {
 	DEBUG(0, ("This function should not be used!\n"));
 	return False;
@@ -699,9 +699,10 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->name = "multisam";
 
 	/* Mandatory implementation */
-	(*pdb_method)->setsampwent = multisam_setsampwent;
-	(*pdb_method)->endsampwent = multisam_endsampwent;
-	(*pdb_method)->getsampwent = multisam_getsampwent;
+//	(*pdb_method)->setsampwent = multisam_setsampwent;
+//	(*pdb_method)->endsampwent = multisam_endsampwent;
+//	(*pdb_method)->getsampwent = multisam_getsampwent;
+//	(*pdb_method)->search_users = multisam_search_users;
 	(*pdb_method)->getsampwnam = multisam_getsampwnam;
 	(*pdb_method)->getsampwsid = multisam_getsampwsid;
 	(*pdb_method)->add_sam_account = multisam_add_sam_account;
@@ -744,7 +745,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->get_account_policy = multisam_get_account_policy;
 	(*pdb_method)->set_account_policy = multisam_set_account_policy;
 	(*pdb_method)->get_seq_num = multisam_get_seq_num;
-	(*pdb_method)->search_users = multisam_search_users;
+//	(*pdb_method)->search_users = multisam_search_users;
 	(*pdb_method)->search_groups = multisam_search_groups;
 	(*pdb_method)->search_aliases = multisam_search_aliases;
 #endif
@@ -755,7 +756,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	}
 
 	data->location = talloc_strdup(data, location);
-	data->names = str_list_make_talloc(data, data->location, NULL);
+//	data->names = str_list_make_talloc(data, data->location, NULL);
 	data->num_backends = str_list_count((const char **)data->names);
 	data->locations = talloc_array(data, char *, data->num_backends);
 	data->methods = talloc_array(data, struct pdb_methods *, data->num_backends);
@@ -799,7 +800,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	return NT_STATUS_OK;
 }
 
-NTSTATUS init_module(void) 
+NTSTATUS init_samba_module(void) 
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "multi", multisam_init);
 }
