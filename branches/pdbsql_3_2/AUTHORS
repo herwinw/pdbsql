@@ -1,4 +1,4 @@
-Current maintainer:
+Current maintainer :
 Collen Blijenberg
 Herwin Weststrate
 
@@ -6,3 +6,4 @@ original authors:
 Jelmer Vernooij <jelmer@samba.org> (pdbsql core / pdb_mysql / pdb_multi)
 Wilco Baan Hofman (pdb_multi)
 Hamish Friedlander (pdb_pgsql)
+
