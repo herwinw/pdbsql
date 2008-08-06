@@ -829,17 +829,15 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 
 	data->location = talloc_strdup(data, location);
 	//data->names = str_list_make_talloc(data, data->location, NULL);
-	data->names = talloc_array(data, char *, 1);
-	data->names[0] = talloc_strdup(data, location);
-	// data->num_backends = str_list_count((const char **)data->names);
-	data->num_backends = 1;
+	data->names = str_list_make(data, data->location, NULL);
+	data->num_backends = str_list_count((const char **)data->names);
 	data->locations = talloc_array(data, char *, data->num_backends);
 	data->methods = talloc_array(data, struct pdb_methods *, data->num_backends);
 
 	for (i = 0; i < data->num_backends; i++) {
 		struct pdb_init_function_entry *entry = NULL;
 
-	data->locations[i] = strchr(data->names[i], ':');
+		data->locations[i] = strchr(data->names[i], ':');
 		if (data->locations[i]) {
 			*(data->locations[i]) = '\0';
 			data->locations[i]++;
