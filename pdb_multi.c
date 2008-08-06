@@ -42,6 +42,85 @@ typedef struct multisam_data {
 	struct pdb_methods *default_methods;
 } multisam_data;
 
+struct multisam_search_state {
+	uint32_t acct_flags;
+	int current;
+	struct pdb_search **search;
+	int num_backends;
+};
+
+static bool multisam_search_next_entry(struct pdb_search *search,
+		struct samr_displayentry *entry)
+{
+	int i;
+	struct multisam_search_state *state;
+
+	state = talloc_get_type_abort(search->private_data, struct multisam_search_state);
+	for (i = 0; i < state->num_backends; i++)
+	{
+		bool res;
+		struct pdb_search *s = state->search[i];
+
+		res = s->next_entry(s, entry);
+		if (res == True)
+			return True;
+	}
+	
+	return False;
+}
+
+static void multisam_search_end(struct pdb_search *search)
+{
+	int i;
+	struct multisam_search_state *state;
+
+	state = talloc_get_type_abort(search->private_data, struct multisam_search_state);
+	for (i = 0; i < state->num_backends; i++)
+	{
+		struct pdb_search *s = state->search[i];
+		s->search_end(s);
+	}
+
+	talloc_free(search);
+}
+
+static bool multisam_search_users(struct pdb_methods *methods,
+				     struct pdb_search *search,
+				     uint32 acct_flags)
+{
+	struct multisam_search_state *state;
+	struct multisam_data *data;
+	int i;
+
+	data = (struct multisam_data *) methods->private_data;
+	state = TALLOC_ZERO_P(search->mem_ctx, struct multisam_search_state);
+	if (state == NULL)
+	{
+		DEBUG(0, ("Talloc failed\n"));
+		return False;
+	}
+
+	state->acct_flags = acct_flags;
+	state->current = 0;
+	state->num_backends = data->num_backends;
+
+	/* Initialize all backends, take care of the search structs */
+	state->search = talloc_array(data, struct pdb_search *, data->num_backends);
+	for (i = 0; i < data->num_backends; i++)
+	{
+		struct pdb_search *search2 = TALLOC_ZERO_P(data, struct pdb_search);
+		memcpy(search2, search, sizeof(struct pdb_search));
+		data->methods[i]->search_users(data->methods[i], search2, acct_flags);
+		state->search[i] = search2;
+	}
+
+	search->private_data = state;
+	search->next_entry = multisam_search_next_entry;
+	search->search_end = multisam_search_end;
+	return True;
+}
+
+
 #define SET_DATA(data,methods) { \
 	if(!methods){ \
 		DEBUG(0, ("invalid methods!\n")); \
@@ -94,13 +173,6 @@ static bool multisam_search_groups(struct pdb_methods *methods,
 static bool multisam_search_aliases(struct pdb_methods *methods,
 				       struct pdb_search *search,
 				       const DOM_SID *sid)
-{
-	return False;
-}
-
-static bool multisam_search_users(struct pdb_methods *methods,
-				     struct pdb_search *search,
-				     uint32 acct_flags)
 {
 	return False;
 }
@@ -702,7 +774,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 //	(*pdb_method)->setsampwent = multisam_setsampwent;
 //	(*pdb_method)->endsampwent = multisam_endsampwent;
 //	(*pdb_method)->getsampwent = multisam_getsampwent;
-//	(*pdb_method)->search_users = multisam_search_users;
+	(*pdb_method)->search_users = multisam_search_users;
 	(*pdb_method)->getsampwnam = multisam_getsampwnam;
 	(*pdb_method)->getsampwsid = multisam_getsampwsid;
 	(*pdb_method)->add_sam_account = multisam_add_sam_account;
@@ -756,15 +828,18 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	}
 
 	data->location = talloc_strdup(data, location);
-//	data->names = str_list_make_talloc(data, data->location, NULL);
-	data->num_backends = str_list_count((const char **)data->names);
+	//data->names = str_list_make_talloc(data, data->location, NULL);
+	data->names = talloc_array(data, char *, 1);
+	data->names[0] = talloc_strdup(data, location);
+	// data->num_backends = str_list_count((const char **)data->names);
+	data->num_backends = 1;
 	data->locations = talloc_array(data, char *, data->num_backends);
 	data->methods = talloc_array(data, struct pdb_methods *, data->num_backends);
 
 	for (i = 0; i < data->num_backends; i++) {
 		struct pdb_init_function_entry *entry = NULL;
 
-		data->locations[i] = strchr(data->names[i], ':');
+	data->locations[i] = strchr(data->names[i], ':');
 		if (data->locations[i]) {
 			*(data->locations[i]) = '\0';
 			data->locations[i]++;
@@ -804,3 +879,9 @@ NTSTATUS init_samba_module(void)
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "multi", multisam_init);
 }
+
+NTSTATUS init_module(void)
+{
+	return init_samba_module();
+}
+
