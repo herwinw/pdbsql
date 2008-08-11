@@ -510,7 +510,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 						   config_value_write(location,
 											  "unknown string column",
 											  CONFIG_UNKNOWN_STR_DEFAULT),
-						   pdb_get_comment(newpwd));
+						   pdb_get_workstations(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LMPASSWD)) {
