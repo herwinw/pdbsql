@@ -51,7 +51,6 @@ static int pgsqlsam_debug_level = DBGC_ALL;
 
 /* handles for doing db transactions */
 typedef struct pdb_pgsql_data {
-	PGconn     *master_handle;
 	PGconn     *handle;
 
 	PGresult   *pwent;
@@ -121,24 +120,37 @@ static PGconn *pgsqlsam_connect(struct pdb_pgsql_data *data)
 	return handle;
 }
 
-/* The assumption here is that the master process will get connection 0,
- * and all the renaining ones just one connection for their etire life span.
- */
-static PGconn *choose_connection(struct pdb_pgsql_data *data)
+static PGresult *pdb_pgsql_query(struct pdb_pgsql_data *data, char *query)
 {
-	if (data->master_handle == NULL) {
-		data->master_handle = pgsqlsam_connect(data);
-		return data->master_handle;
-	}
+	PGresult *result;
 
-	/* Master connection != NULL, so we are just another process. */
-
-	/* If we didn't connect yet, do it now. */
+	/* Connect to the DB. */
 	if (data->handle == NULL) {
+		DEBUG(0, ("Unable to obtain handle, trying to connect\n"));
 		data->handle = pgsqlsam_connect(data);
+		if (data->handle == NULL)
+		{
+			DEBUG(0, ("Failed again, stopping\n"));
+			return NULL;
+		}
 	}
 
-	return data->handle;
+	/* Execute query */
+	DEBUG(5, ("Executing query %s\n", query));
+	result = PQexec(data->handle, query);
+
+	/* Result? */
+	if (result == NULL) {
+		/* Will happen mostly because the server has been disconnected */
+		DEBUG(1, ("Error executing %s, %s (trying to recover with reconnect)\n", query, PQerrorMessage(data->handle)));
+		PQreset(data->handle);
+	} else if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+		DEBUG(1, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
+		PQclear(result);
+		result = NULL;
+	}
+
+	return result;
 }
 
 static long PQgetlong(PGresult *r, long row, long col)
@@ -239,7 +251,6 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct samu *user, enum sql_search_field field, const char *sname)
 {
 	struct pdb_pgsql_data *data;
-	PGconn *handle;
   
 	char *esc;
 	char *query;
@@ -266,36 +277,23 @@ static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct sam
 	/* tmp_sname = smb_xstrdup(sname); */
 	PQescapeString(esc, sname, strlen(sname));
 
-	/* Connect to the DB. */
-	handle = choose_connection(data);
-	if (handle == NULL) {
-		return NT_STATUS_UNSUCCESSFUL;
-	}
-  
 	query = sql_account_query_select(NULL, data->location, True, field, esc);
-  
-	/* Execute query */
-	DEBUG(5, ("Executing query %s\n", query));
-	result = PQexec(handle, query);
+	result = pdb_pgsql_query(data, query);
   
 	/* Result? */
-	if (result == NULL) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
+	if (result == NULL)
+	{
 		retval = NT_STATUS_UNSUCCESSFUL;
-	} else if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
-		retval = NT_STATUS_UNSUCCESSFUL;
-	} else {
+	}
+	else
+	{
 		retval = row_to_sam_account(result, 0, user);
+	    PQclear(result);
 	}
   
 	talloc_free(esc);
 	talloc_free(query);
  
-	if (result != NULL) {
-		PQclear(result);
-	}
-	
 	return retval;
 }
 
@@ -354,7 +352,6 @@ static NTSTATUS pgsqlsam_getsampwsid(struct pdb_methods *methods, struct samu *u
 static NTSTATUS pgsqlsam_delete_sam_account(struct pdb_methods *methods, struct samu *sam_pass)
 {
 	struct pdb_pgsql_data *data;
-	PGconn *handle;
   
 	const char *sname = pdb_get_username(sam_pass);
 	char *esc;
@@ -379,30 +376,17 @@ static NTSTATUS pgsqlsam_delete_sam_account(struct pdb_methods *methods, struct 
   
 	PQescapeString(esc, sname, strlen(sname));
 
-	/* Connect to the DB. */
-	handle = choose_connection(data);
-	if (handle == NULL) {
-		return NT_STATUS_UNSUCCESSFUL;
-  	}
 	query = sql_account_query_delete(NULL, data->location, esc);
-  
-	/* Execute query */
-	result = PQexec(handle, query);
+	result = pdb_pgsql_query(data, query);
   
 	if (result == NULL) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
-		retval = NT_STATUS_UNSUCCESSFUL;
-	} else if (PQresultStatus(result) != PGRES_COMMAND_OK) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
 		retval = NT_STATUS_UNSUCCESSFUL;
 	} else {
 		DEBUG(5, ("User '%s' deleted\n", sname));
 		retval = NT_STATUS_OK;
+		PQclear(result);
 	}
   
-	if (result != NULL) {
-		    PQclear(result);
-	}
 	talloc_free(esc);
 	talloc_free(query);
   
@@ -412,7 +396,6 @@ static NTSTATUS pgsqlsam_delete_sam_account(struct pdb_methods *methods, struct 
 static NTSTATUS pgsqlsam_replace_sam_account(struct pdb_methods *methods, struct samu *newpwd, char isupdate)
 {
 	struct pdb_pgsql_data *data;
-	PGconn *handle;
 	char *query;
 	PGresult *result;
 	NTSTATUS retval;
@@ -434,30 +417,18 @@ static NTSTATUS pgsqlsam_replace_sam_account(struct pdb_methods *methods, struct
 		/* Nothing to update. */
 		return NT_STATUS_OK;
 	}
-	/* Connect to the DB. */
-	handle = choose_connection(data);
-	if (handle == NULL) {
-		return NT_STATUS_UNSUCCESSFUL;
-	}
 
 	/* Execute the query */
-	result = PQexec(handle, query);
+	result = pdb_pgsql_query(data, query);
   
 	if (result == NULL) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
-		retval = NT_STATUS_INVALID_PARAMETER;
-	} else if (PQresultStatus(result) != PGRES_COMMAND_OK) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
 		retval = NT_STATUS_INVALID_PARAMETER;
 	} else {
+		PQclear(result);
 		retval = NT_STATUS_OK;
 	}
 	
-	if (result != NULL) {
-		PQclear(result);
-	}
 	talloc_free(query);
-  
 	return retval;
 }
 
@@ -559,7 +530,6 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 {
 	struct pdb_pgsql_data *data;
 	struct pdb_pgsql_search_state *search_state;
-	PGconn *handle;
 	char *query;
 
 	data = (struct pdb_pgsql_data *) pdb_methods->private_data;
@@ -576,26 +546,16 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 		return False;
 	}
 
-	handle = choose_connection(data);
-	if (handle == NULL) {
-		DEBUG(0, ("Unable to obtain handle\n"));
-		return False;
-	}
 
 	/* The query to select all the users */
 	query = sql_account_query_select(NULL, data->location, False, SQL_SEARCH_NONE, NULL);
 
-	DEBUG(5, ("Executing query: %s\n", query));
-	search_state->pwent = PQexec(handle, query);
+	search_state->pwent = pdb_pgsql_query(data, query);
 	search_state->currow = 0;
 	talloc_free(query);
 
 	/* Check results */
 	if (search_state->pwent == NULL) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQerrorMessage(handle)));
-		return False;
-	} else if (PQresultStatus(search_state->pwent) != PGRES_TUPLES_OK) {
-		DEBUG(0, ("Error executing %s, %s\n", query, PQresultErrorMessage(search_state->pwent)));
 		return False;
 	} else {
 		DEBUG(5, ("pgsqlsam_search_users succeeded(%d results)!\n", PQntuples(search_state->pwent)));
@@ -639,7 +599,6 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	data = talloc(*pdb_method, struct pdb_pgsql_data);
 	(*pdb_method)->private_data = data;
 
-	data->master_handle = NULL;
 	data->handle = NULL;
 	data->pwent  = NULL;
 
