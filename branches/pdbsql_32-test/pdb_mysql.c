@@ -88,6 +88,37 @@ static NTSTATUS pdb_mysql_connect(struct pdb_mysql_data *data) {
 	return NT_STATUS_OK;
 }
 
+static bool pdb_mysql_query(struct pdb_mysql_data *data, char *query, int *mysql_ret)
+{
+	int res;
+
+	DEBUG(5, ("Executing query %s\n", query));
+	res = mysql_query(data->handle, query);
+	
+	/* [SYN] If the server has gone away, reconnect and retry */
+	if (res && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
+		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
+
+		/* [SYN] Reconnect */
+		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
+			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
+			return False;
+		}
+		/* [SYN] Retry */
+		res = mysql_query(data->handle, query);
+	}
+
+	if (res)
+	{
+		DEBUG(0,
+			("Error while executing MySQL query %s\n", 
+				mysql_error(data->handle)));
+	}
+
+	*mysql_ret = res;
+	return True;
+}
+
 static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 {
 	MYSQL_ROW row;
@@ -204,34 +235,14 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 
 	talloc_free(esc_sname);
 
-	DEBUG(5, ("Executing query %s\n", query));
-	
-	mysql_ret = mysql_query(data->handle, query);
-	
-	/* [SYN] If the server has gone away, reconnect and retry */
-	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
-		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
-
-		/* [SYN] Reconnect */
-		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
-			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
-			talloc_free(query);
-			return NT_STATUS_UNSUCCESSFUL;
-		}
-		/* [SYN] Retry */
-		mysql_ret = mysql_query(data->handle, query);
-	}
-	
-	talloc_free(query);
-	
-	if (mysql_ret) {
-		DEBUG(0,
-			("Error while executing MySQL query %s\n", 
-				mysql_error(data->handle)));
+	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	{
+		talloc_free(query);
 		talloc_free(mem_ctx);
 		return NT_STATUS_UNSUCCESSFUL;
 	}
 	
+	talloc_free(query);
 	res = mysql_store_result(data->handle);
 	if (res == NULL) {
 		DEBUG(0,
@@ -281,7 +292,7 @@ static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu * 
 	SET_DATA(data, methods);
 
 	sid_to_fstring(sid_str, sid);
-	// sid_string_dbg(sid);
+	/* sid_string_dbg(sid); */
         
 	return mysqlsam_select_by_field(methods, user, SQL_SEARCH_USER_SID, sid_str);
 }
@@ -338,31 +349,14 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 
 	talloc_free(esc);
 
-	mysql_ret = mysql_query(data->handle, query);
-	
-	/* [SYN] If the server has gone away, reconnect and retry */
-	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
-		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
-
-		/* [SYN] Reconnect */
-		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
-			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
-			talloc_free(query);
-			return NT_STATUS_UNSUCCESSFUL;
-		}
-		/* [SYN] Retry */
-		mysql_ret = mysql_query(data->handle, query);
-	}
-
-	talloc_free(query);
-
-	if (mysql_ret) {
-		DEBUG(0,
-			  ("Error while executing query: %s\n",
-			   mysql_error(data->handle)));
+	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	{
+		talloc_free(query);
 		talloc_free(mem_ctx);
 		return NT_STATUS_UNSUCCESSFUL;
 	}
+
+	talloc_free(query);
 
 	DEBUG(5, ("User '%s' deleted\n", sname));
 	talloc_free(mem_ctx);
@@ -392,33 +386,14 @@ static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
  	if ( query == NULL ) /* Nothing to update. */
  		return NT_STATUS_OK;
 	
-	/* Execute the query */
-	mysql_ret = mysql_query(data->handle, query);
 	
-	/* [SYN] If the server has gone away, reconnect and retry */
-	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
-		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
-
-		/* [SYN] Reconnect */
-		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
-			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
-			talloc_free(query);
-			return NT_STATUS_UNSUCCESSFUL;
-		}
-		/* [SYN] Retry */
-		mysql_ret = mysql_query(data->handle, query);
-	}
-	
-	if (mysql_ret) {
-		DEBUG(0,
-			  ("Error executing %s, %s\n", query,
-			   mysql_error(data->handle)));
+	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	{
 		talloc_free(query);
-		return NT_STATUS_INVALID_PARAMETER;
+		return NT_STATUS_UNSUCCESSFUL;
 	}
 
 	talloc_free(query);
-
 	return NT_STATUS_OK;
 }
 
@@ -444,7 +419,7 @@ struct mysqlsam_search_state {
 	uint32_t acct_flags;
 
 	MYSQL_RES *pwent;
-//	struct samr_displayentry *entries;
+	/* struct samr_displayentry *entries; */
 	uint32_t num_entries;
 	uint32_t current;
 };
@@ -460,8 +435,6 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 	if (state->current >= state->num_entries) {
 		return false;
 	}
-
-
 
 	row = mysql_fetch_row(state->pwent);
 	if (row[18]) {
@@ -483,7 +456,6 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 
 	if ((entry->acct_flags & state->acct_flags) != state->acct_flags) {
 		return mysqlsam_search_next_entry(search, entry);
- 
 	}
 
 	return true;
@@ -517,32 +489,16 @@ static bool mysqlsam_search_users(struct pdb_methods *methods,
 	}
 
 	state->acct_flags = acct_flags;
-//
+
 	query = sql_account_query_select(NULL, data->location, False, SQL_SEARCH_NONE, NULL);
 
-	mysql_ret = mysql_query(data->handle, query);
-	
-//	/* [SYN] If the server has gone away, reconnect and retry */
-	if (mysql_ret && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
-		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
-
-//		/* [SYN] Reconnect */
-		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
-			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
-			talloc_free(query);
-			return false;
-		}
-//		/* [SYN] Retry */
-		mysql_ret = mysql_query(data->handle, query);
+	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	{
+		talloc_free(query);
+		return False;
 	}
-	
+
 	talloc_free(query);
-
-	if (mysql_ret) {
-		DEBUG(0,
-			   ("Error executing MySQL query %s\n", mysql_error(data->handle)));
-		return false;
-	}
 
 	state->pwent = mysql_store_result(data->handle);
 

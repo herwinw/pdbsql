@@ -412,7 +412,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 						   config_value_write(location, "user sid column",
 											  CONFIG_USER_SID_DEFAULT),
 						   sid_to_fstring(sid_str, 
-//						   sid_string_dbg(sid, 
+						   /* sid_string_dbg(sid, */
 						   				 pdb_get_user_sid(newpwd)));
 	}
 
