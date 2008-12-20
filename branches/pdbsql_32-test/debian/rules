@@ -25,12 +25,13 @@ binary-arch: build
 	$(MAKE) install DESTDIR=`pwd`/debian/tmp LIBDIR=/usr/lib/samba
 	dh_install --sourcedir=`pwd`/debian/tmp
 	dh_installdocs -p samba-pdb-pgsql AUTHORS docs/README
-	dh_installdocs -p samba-pdb-mysql docs/pdb_mysql.xml AUTHORS docs/README
-	dh_installdocs -p samba-pdb-multi AUTHORS docs/README
+	dh_installdocs -p samba-pdb-mysql docs/pdb_mysql.html AUTHORS docs/README
+	dh_installdocs -p samba-pdb-multi docs/pdb_pgsql.html AUTHORS docs/README
 	dh_installchangelogs -a 
 	dh_installexamples -p samba-pdb-mysql docs/smb.conf.mysql docs/mysql.dump 
 	dh_installexamples -p samba-pdb-pgsql docs/smb.conf.pgsql docs/pgsql.dump
 	dh_installman -a
+	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
 	dh_shlibdeps -a
