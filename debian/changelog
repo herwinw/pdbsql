@@ -1,5 +1,12 @@
+samba-pdbsql (0.04) UNRELEASED; urgency=low
+
+  * Compatible with Samba 3.2.0
+  * Some more things, TODO
+
+ -- Herwin Weststrate <herwin@snt.utwente.nl>  Tue, 19 Aug 2008 23:48:28 +0200
+
 samba-pdbsql (0.01) UNRELEASED; urgency=low
 
-  * Initial release. (Closes: #XXXXXX)
+  * Initial release.
 
  -- Jelmer Vernooij <jelmer@samba.org>  Tue, 21 Mar 2006 01:11:31 +0100

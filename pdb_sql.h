@@ -4,7 +4,7 @@
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free 
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -32,7 +32,7 @@ enum sql_search_field {
 char *sql_escape_string(TALLOC_CTX *mem_ctx, const char *unesc);
 
 char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, 
-			           BOOL update, enum sql_search_field field, 
+			           bool update, enum sql_search_field field, 
 			           const char *value);
 
 char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data, 
@@ -41,7 +41,7 @@ char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data,
 char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, 
 		                   struct samu *newpwd, char isupdate);
 
-BOOL sql_account_config_valid(const char *data);
+bool sql_account_config_valid(const char *data);
 
 #endif /* _PDB_SQL_H */
 
