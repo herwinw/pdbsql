@@ -443,9 +443,9 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 	}
 
 	entry->acct_flags = atoi(row[23]);
-	entry->account_name = talloc_strdup(search->mem_ctx,row[6]);
-	entry->fullname = talloc_strdup(search->mem_ctx,row[9]);
-	entry->description = talloc_strdup(search->mem_ctx,row[14]);
+	entry->account_name = talloc_strdup(search, row[6]);
+	entry->fullname = talloc_strdup(search, row[9]);
+	entry->description = talloc_strdup(search, row[14]);
         
 	state->current += 1;
 
@@ -482,7 +482,7 @@ static bool mysqlsam_search_users(struct pdb_methods *methods,
 	int mysql_ret;
 	struct mysqlsam_search_state *state;
 
-	state = TALLOC_ZERO_P(search->mem_ctx, struct mysqlsam_search_state);
+	state = TALLOC_ZERO_P(search, struct mysqlsam_search_state);
 	if (state == NULL) {
 		DEBUG(0, ("talloc failed\n"));
 		return false;
