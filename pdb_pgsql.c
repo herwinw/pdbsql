@@ -486,9 +486,9 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 	}
 
 	entry->acct_flags = atoi(PQgetvalue(r, row, 23));
-	entry->account_name = talloc_strdup(search->mem_ctx, PQgetvalue(r, row, 6));
-	entry->fullname = talloc_strdup(search->mem_ctx, PQgetvalue(r, row, 9));
-	entry->description = talloc_strdup(search->mem_ctx, PQgetvalue(r, row, 14));
+	entry->account_name = talloc_strdup(search, PQgetvalue(r, row, 6));
+	entry->fullname = talloc_strdup(search, PQgetvalue(r, row, 9));
+	entry->description = talloc_strdup(search, PQgetvalue(r, row, 14));
 
 	search_state->currow++;
 
@@ -534,7 +534,7 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 
 	data = (struct pdb_pgsql_data *) pdb_methods->private_data;
   
-	search_state = TALLOC_ZERO_P(search->mem_ctx, struct pdb_pgsql_search_state);
+	search_state = TALLOC_ZERO_P(search, struct pdb_pgsql_search_state);
 	if (search_state == NULL) {
 		DEBUG(0, ("talloc failed\n"));
 		return False;

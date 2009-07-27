@@ -93,7 +93,7 @@ static bool multisam_search_users(struct pdb_methods *methods,
 	int i;
 
 	data = (struct multisam_data *) methods->private_data;
-	state = TALLOC_ZERO_P(search->mem_ctx, struct multisam_search_state);
+	state = talloc_zero(search, struct multisam_search_state);
 	if (state == NULL)
 	{
 		DEBUG(0, ("Talloc failed\n"));
@@ -831,7 +831,7 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 
 	data->location = talloc_strdup(data, location);
 	data->names = str_list_make(data, data->location, NULL);
-	data->num_backends = str_list_count((const char **)data->names);
+	data->num_backends = str_list_length((const char **)data->names);
 	data->locations = talloc_array(data, char *, data->num_backends);
 	data->methods = talloc_array(data, struct pdb_methods *, data->num_backends);
 
