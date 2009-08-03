@@ -102,7 +102,7 @@ static bool pdb_mysql_query(struct pdb_mysql_data *data, char *query, int *mysql
 		/* [SYN] Reconnect */
 		if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
 			DEBUG(0, ("Error: Lost connection to MySQL server\n"));
-			return False;
+			return false;
 		}
 		/* [SYN] Retry */
 		res = mysql_query(data->handle, query);
@@ -116,7 +116,7 @@ static bool pdb_mysql_query(struct pdb_mysql_data *data, char *query, int *mysql
 	}
 
 	*mysql_ret = res;
-	return True;
+	return true;
 }
 
 static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
@@ -231,11 +231,11 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 		return NT_STATUS_INVALID_PARAMETER;
 	}
 
-	query = sql_account_query_select(mem_ctx, data->location, True, field, esc_sname);
+	query = sql_account_query_select(mem_ctx, data->location, true, field, esc_sname);
 
 	talloc_free(esc_sname);
 
-	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	if (pdb_mysql_query(data, query, &mysql_ret) == false)
 	{
 		talloc_free(query);
 		talloc_free(mem_ctx);
@@ -349,7 +349,7 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 
 	talloc_free(esc);
 
-	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	if (pdb_mysql_query(data, query, &mysql_ret) == false)
 	{
 		talloc_free(query);
 		talloc_free(mem_ctx);
@@ -387,7 +387,7 @@ static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
  		return NT_STATUS_OK;
 	
 	
-	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	if (pdb_mysql_query(data, query, &mysql_ret) == false)
 	{
 		talloc_free(query);
 		return NT_STATUS_UNSUCCESSFUL;
@@ -409,10 +409,10 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 }
 
 static bool mysqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
-	return True;
+	return true;
 }
 static bool mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
-	return False;
+	return false;
 }
 
 struct mysqlsam_search_state {
@@ -490,12 +490,12 @@ static bool mysqlsam_search_users(struct pdb_methods *methods,
 
 	state->acct_flags = acct_flags;
 
-	query = sql_account_query_select(NULL, data->location, False, SQL_SEARCH_NONE, NULL);
+	query = sql_account_query_select(NULL, data->location, false, SQL_SEARCH_NONE, NULL);
 
-	if (pdb_mysql_query(data, query, &mysql_ret) == False)
+	if (pdb_mysql_query(data, query, &mysql_ret) == false)
 	{
 		talloc_free(query);
-		return False;
+		return false;
 	}
 
 	talloc_free(query);
