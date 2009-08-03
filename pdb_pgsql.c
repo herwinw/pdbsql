@@ -277,7 +277,7 @@ static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct sam
 	/* tmp_sname = smb_xstrdup(sname); */
 	PQescapeString(esc, sname, strlen(sname));
 
-	query = sql_account_query_select(NULL, data->location, True, field, esc);
+	query = sql_account_query_select(NULL, data->location, true, field, esc);
 	result = pdb_pgsql_query(data, query);
   
 	/* Result? */
@@ -444,15 +444,15 @@ static NTSTATUS pgsqlsam_update_sam_account(struct pdb_methods *methods, struct 
 
 static bool pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods) 
 {
-	return True;
+	return true;
 }
 static bool pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid) 
 {
-	return False;
+	return false;
 }
 
 /* Iterate through search results, if a new entry is available: store in
- * entry and return True. Otherwise: return False
+ * entry and return true. Otherwise: return false
  */
 static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 		struct samr_displayentry *entry)
@@ -468,12 +468,12 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 
 	if (r == NULL) {
 		DEBUG(0, ("invalid query result pointer\n"));
-		return False;
+		return false;
 	}
 
 	if (row >= PQntuples(r)) {
 		/* We've reached the end */
-		return False;
+		return false;
 	}
 	
 	/* Now why do we need to fill entry as rid is enough? Okay, it is a bit
@@ -494,7 +494,7 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 
 	if ((entry->account_name == NULL)) {
 		DEBUG(0, ("talloc_strdup failed\n"));
-		return False;
+		return false;
 	}
 
 	if ((entry->acct_flags & search_state->acct_flags) != search_state->acct_flags) {
@@ -502,7 +502,7 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
  
 	}
 
-	return True;
+	return true;
 }
 
 /* Free the memory after a search, reset some default values */
@@ -537,18 +537,18 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	search_state = TALLOC_ZERO_P(search, struct pdb_pgsql_search_state);
 	if (search_state == NULL) {
 		DEBUG(0, ("talloc failed\n"));
-		return False;
+		return false;
 	}
 	search_state->acct_flags = acct_flags;
 
 	if (!pdb_methods) {
 		DEBUG(0, ("invalid methods!\n"));
-		return False;
+		return false;
 	}
 
 
 	/* The query to select all the users */
-	query = sql_account_query_select(NULL, data->location, False, SQL_SEARCH_NONE, NULL);
+	query = sql_account_query_select(NULL, data->location, false, SQL_SEARCH_NONE, NULL);
 
 	search_state->pwent = pdb_pgsql_query(data, query);
 	search_state->currow = 0;
@@ -556,7 +556,7 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 
 	/* Check results */
 	if (search_state->pwent == NULL) {
-		return False;
+		return false;
 	} else {
 		DEBUG(5, ("pgsqlsam_search_users succeeded(%d results)!\n", PQntuples(search_state->pwent)));
 	}
@@ -564,7 +564,7 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	search->next_entry = pgsqlsam_search_next_entry;
 	search->search_end = pgsqlsam_search_end;
   
-	return True;
+	return true;
 }
 
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)

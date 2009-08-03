@@ -603,8 +603,8 @@ bool sql_account_config_valid(const char *data)
 	
     if(!strcmp(sid_column,"NULL") || !strcmp(username_column, "NULL")) {
         DEBUG(0,("Please specify both a valid 'user sid column' and a valid 'username column' in smb.conf\n"));
-        return False;
+        return false;
     }
 
-	return True;
+	return true;
 }

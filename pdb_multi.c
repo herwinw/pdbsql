@@ -62,11 +62,11 @@ static bool multisam_search_next_entry(struct pdb_search *search,
 		struct pdb_search *s = state->search[i];
 
 		res = s->next_entry(s, entry);
-		if (res == True)
-			return True;
+		if (res == true)
+			return true;
 	}
 	
-	return False;
+	return false;
 }
 
 static void multisam_search_end(struct pdb_search *search)
@@ -97,7 +97,7 @@ static bool multisam_search_users(struct pdb_methods *methods,
 	if (state == NULL)
 	{
 		DEBUG(0, ("Talloc failed\n"));
-		return False;
+		return false;
 	}
 
 	state->acct_flags = acct_flags;
@@ -117,7 +117,7 @@ static bool multisam_search_users(struct pdb_methods *methods,
 	search->private_data = state;
 	search->next_entry = multisam_search_next_entry;
 	search->search_end = multisam_search_end;
-	return True;
+	return true;
 }
 
 
@@ -140,15 +140,15 @@ static bool multisam_new_rid(struct pdb_methods *methods,
 	short i;
 	struct multisam_data *data;
 	
-	if (!methods) return False;
+	if (!methods) return false;
 	data = (struct multisam_data *)methods->private_data;
-	if (!data) return False;
+	if (!data) return false;
 	
 	
 	/* 250 tries.. Andrew Bartlett picked the number. */
 	for (i = 0; *rid == 0 && i < 250; i++) {
 		if (!data->methods[backend]->new_rid(data->methods[backend], rid)) {
-			return False;
+			return false;
 		}
 		/* FIXME We need a function to check if a rid is used.
 		if () {
@@ -157,24 +157,24 @@ static bool multisam_new_rid(struct pdb_methods *methods,
 	}
 	
 	if (*rid == 0) {
-		return False;
+		return false;
 	}
 	
-	return True;
+	return true;
 }
 
 #if 0
 static bool multisam_search_groups(struct pdb_methods *methods,
 				      struct pdb_search *search)
 {
-	return False;
+	return false;
 }
 
 static bool multisam_search_aliases(struct pdb_methods *methods,
 				       struct pdb_search *search,
 				       const DOM_SID *sid)
 {
-	return False;
+	return false;
 }
 
 static NTSTATUS multisam_get_account_policy(struct pdb_methods *methods, int policy_index, uint32 *value)
@@ -204,18 +204,18 @@ static bool multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
 	struct multisam_data *data;
 	bool rv;
 	
-	if (!methods) return False;
+	if (!methods) return false;
 	data = (struct multisam_data *)methods->private_data;
-	if (!data) return False;
+	if (!data) return false;
 	
 	for (i = 0; i < data->num_backends; i++) {
 		rv = data->methods[i]->uid_to_rid(data->methods[i], uid, rid);
-		if (rv == True) {
-			return True;
+		if (rv == true) {
+			return true;
 		}
 	}
 	
-	return False;
+	return false;
 }
 
 /* Tries gid_to_sid on every backend until one succeeds, returns true on success */
@@ -226,18 +226,18 @@ static bool multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
 	struct multisam_data *data;
 	bool rv;
 	
-	if (!methods) return False;
+	if (!methods) return false;
 	data = (struct multisam_data *)methods->private_data;
-	if (!data) return False;
+	if (!data) return false;
 	
 	for (i = 0; i < data->num_backends; i++) {
 		rv = data->methods[i]->gid_to_sid(data->methods[i], gid, sid);
-		if (rv == True) {
-			return True;
+		if (rv == true) {
+			return true;
 		}
 	}
 	
-	return False;
+	return false;
 }
 
 /* Tries sid_to_id on every backend until one succeeds, returns true on success */
@@ -249,18 +249,18 @@ static bool multisam_sid_to_id(struct pdb_methods *methods,
 	struct multisam_data *data;
 	bool rv;
 	
-	if (!methods) return False;
+	if (!methods) return false;
 	data = (struct multisam_data *)methods->private_data;
-	if (!data) return False;
+	if (!data) return false;
 	
 	for (i = 0; i < data->num_backends; i++) {
 		rv = data->methods[i]->sid_to_id(data->methods[i], sid, id, type);
-		if (rv == True) {
-			return True;
+		if (rv == true) {
+			return true;
 		}
 	}
 	
-	return False;
+	return false;
 }
 
 #if 0
@@ -735,13 +735,13 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 /* The rid algorithm of the first backend is used. */
 static bool multisam_rid_algorithm (struct pdb_methods *methods)
 {
-	return True;
+	return true;
 }
 /* This function is a fallback for errors */
 static bool multisam_dummy_new_rid (struct pdb_methods *methods, uint32 *rid)
 {
 	DEBUG(0, ("This function should not be used!\n"));
-	return False;
+	return false;
 }
 
 static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *location)
