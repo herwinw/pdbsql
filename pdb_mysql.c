@@ -553,7 +553,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 		return NT_STATUS_INVALID_PARAMETER;
 	}
 
-	data->location = smb_xstrdup(location);
+	data->location = talloc_strdup(data, location);
 
 	DEBUG(1,
 		  ("Connecting to database server, host: %s, user: %s, database: %s, port: %ld\n",

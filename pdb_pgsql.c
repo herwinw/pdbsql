@@ -315,7 +315,7 @@ static NTSTATUS pgsqlsam_getsampwnam(struct pdb_methods *methods, struct samu *u
 		return NT_STATUS_INVALID_PARAMETER;
 	}
 
-	lowercasename = smb_xstrdup(sname);
+	lowercasename = talloc_strdup(data, sname);
 	l = strlen(lowercasename);
 	for(i = 0; i < l; i++) {
 		lowercasename[i] = tolower_ascii(lowercasename[i]);
@@ -323,7 +323,7 @@ static NTSTATUS pgsqlsam_getsampwnam(struct pdb_methods *methods, struct samu *u
   
 	result = pgsqlsam_select_by_field(methods, user, SQL_SEARCH_USER_NAME, lowercasename);
 
-	SAFE_FREE(lowercasename);
+	talloc_free(lowercasename);
 
 	return result;
 }
@@ -607,7 +607,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 		return NT_STATUS_INVALID_PARAMETER;
 	}
 
-	data->location = smb_xstrdup(location);
+	data->location = talloc_strdup(data, location);
 
 	if(!sql_account_config_valid(data->location)) {
 		return NT_STATUS_INVALID_PARAMETER;
