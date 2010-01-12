@@ -12,7 +12,7 @@ PGSQL_LIBS = @PGSQL_LIBS@
 TALLOC_LIBS = -ltalloc
 SOURCEDIR = @SOURCEDIR@
 LIBDIR = @LIBDIR@
-CFLAGS = -Wall @CFLAGS@ -I$(SOURCEDIR)/source3 -I$(SOURCEDIR)/source3/include -I$(SOURCEDIR)/source3/librpc -I$(SOURCEDIR)/lib/replace -I$(SOURCEDIR)/lib/tdb/include -I$(SOURCEDIR)/lib/tevent -I$(SOURCEDIR)/ -I$(SOURCEDIR)/lib/talloc
+CFLAGS = @CFLAGS@ -I$(SOURCEDIR)/source3 -I$(SOURCEDIR)/source3/include -I$(SOURCEDIR)/source3/librpc -I$(SOURCEDIR)/lib/replace -I$(SOURCEDIR)/lib/tdb/include -I$(SOURCEDIR)/lib/tevent -I$(SOURCEDIR)/ -I$(SOURCEDIR)/lib/talloc
 
 all: $(addsuffix .$(SHLIBEXT), $(modules))
 
