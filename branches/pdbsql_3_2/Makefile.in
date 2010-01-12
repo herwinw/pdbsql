@@ -11,7 +11,7 @@ MYSQL_LIBS = @MYSQL_LIBS@
 PGSQL_LIBS = @PGSQL_LIBS@
 SOURCEDIR = @SOURCEDIR@
 LIBDIR = @LIBDIR@
-CFLAGS = -Wall @CFLAGS@ -I$(SOURCEDIR) -I$(SOURCEDIR)/include -I$(SOURCEDIR)/ubiqx -I$(SOURCEDIR)/popt -I$(SOURCEDIR)/lib/replace -I$(SOURCEDIR)/tdb/include -I$(SOURCEDIR)/librpc
+CFLAGS = @CFLAGS@ -I$(SOURCEDIR) -I$(SOURCEDIR)/include -I$(SOURCEDIR)/ubiqx -I$(SOURCEDIR)/popt -I$(SOURCEDIR)/lib/replace -I$(SOURCEDIR)/tdb/include -I$(SOURCEDIR)/librpc
 
 all: $(addsuffix .$(SHLIBEXT), $(modules))
 
