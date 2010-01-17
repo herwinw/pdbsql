@@ -553,7 +553,11 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 		
 		pwhist = pdb_get_pw_history(newpwd, &pw_history_len);
 		
+#if PASSDB_INTERFACE_VERSION < 19
 		pdb_get_account_policy(AP_PASSWORD_HISTORY, &max_history_len);
+#else
+		pdb_get_account_policy(PDB_POLICY_PASSWORD_HISTORY, &pw_history_len);
+#endif
 		
 		some_field_affected = 1;
 		for (i = 0; i < max_history_len && i < pw_history_len; i++) {

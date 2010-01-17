@@ -196,6 +196,7 @@ static NTSTATUS multisam_get_seq_num(struct pdb_methods *methods, time_t *seq_nu
 }
 #endif
 
+#if PASSDB_INTERFACE_VERSION < 19
 /* Tries uid_to_rid on every backend until one succeeds, returns true on success */
 static bool multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
 				   uint32 *rid)
@@ -217,6 +218,7 @@ static bool multisam_uid_to_rid(struct pdb_methods *methods, uid_t uid,
 	
 	return false;
 }
+#endif
 
 /* Tries gid_to_sid on every backend until one succeeds, returns true on success */
 static bool multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
@@ -287,9 +289,15 @@ static NTSTATUS multisam_create_user(struct pdb_methods *methods,
 
 
 	/* Get a new free rid if necessary */
+#if PASSDB_INTERFACE_VERSION < 19
 	if (data->methods[0]->rid_algorithm(data->methods[0])) {
 		multisam_new_rid(methods, rid, 0);
 	}
+#else
+	if (data->methods[0]->capabilities(data->methods[0])) {
+		multisam_new_rid(methods, rid, 0);
+	}
+#endif
 	
 	return data->methods[0]->create_user(data->methods[0], tmp_ctx, name, acb_info, rid);	
 }
@@ -732,11 +740,19 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 }
 #endif
 
+#if PASSDB_INTERFACE_VERSION < 19
 /* The rid algorithm of the first backend is used. */
 static bool multisam_rid_algorithm (struct pdb_methods *methods)
 {
 	return true;
 }
+#else
+/* The capabilities of the first backend is used. */
+static uint32_t multisam_capabilities (struct pdb_methods *methods)
+{
+	return PDB_CAP_STORE_RIDS | PDB_CAP_ADS;
+}
+#endif
 /* This function is a fallback for errors */
 static bool multisam_dummy_new_rid (struct pdb_methods *methods, uint32 *rid)
 {
@@ -783,12 +799,18 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->update_sam_account = multisam_update_sam_account;
 	(*pdb_method)->delete_sam_account = multisam_delete_sam_account;
 	(*pdb_method)->rename_sam_account = multisam_rename_sam_account;
+#if PASSDB_INTERFACE_VERSION < 19
 	(*pdb_method)->rid_algorithm = multisam_rid_algorithm;
+#else
+	(*pdb_method)->capabilities = multisam_capabilities;
+#endif
 	(*pdb_method)->new_rid = multisam_dummy_new_rid;
 
 	(*pdb_method)->create_user = multisam_create_user;
 	(*pdb_method)->delete_user = multisam_delete_user;
+#if PASSDB_INTERFACE_VERSION < 19
 	(*pdb_method)->uid_to_rid = multisam_uid_to_rid;
+#endif
 	(*pdb_method)->gid_to_sid = multisam_gid_to_sid;
 	(*pdb_method)->sid_to_id = multisam_sid_to_id;
 	
