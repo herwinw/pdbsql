@@ -8,6 +8,7 @@ $ cd $SAMBADIR/source
 $ ./configure
 $ make proto
 $ cd $PDBSQLDIR
+$ ./autogen.sh
 $ ./configure --with-samba-dir=$SAMBADIR
 $ make
 $ make install 
