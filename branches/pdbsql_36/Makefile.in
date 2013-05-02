@@ -1,0 +1,44 @@
+# Makefile for experimental pdb modules
+
+CC = @CC@
+INSTALL = @INSTALL@
+
+SHLIBEXT = @SHLIBEXT@
+
+modules = multi @modules@
+
+MYSQL_LIBS = @MYSQL_LIBS@
+PGSQL_LIBS = @PGSQL_LIBS@
+TALLOC_LIBS = -ltalloc
+SOURCEDIR = @SOURCEDIR@
+LIBDIR = @LIBDIR@
+CFLAGS = @CFLAGS@ -I$(SOURCEDIR)/source3 -I$(SOURCEDIR)/source3/include -I$(SOURCEDIR)/source3/librpc -I$(SOURCEDIR)/lib/replace -I$(SOURCEDIR)/lib/tdb/include -I$(SOURCEDIR)/lib/tevent -I$(SOURCEDIR)/ -I$(SOURCEDIR)/lib/talloc
+
+all: $(addsuffix .$(SHLIBEXT), $(modules))
+
+.c.o:
+	$(CC) $(CFLAGS) -fPIC -c $< 
+
+mysql.$(SHLIBEXT): pdb_mysql.o pdb_sql.o
+	$(CC) -shared -o $@ $^ $(MYSQL_LIBS) $(TALLOC_LIBS)
+
+pgsql.$(SHLIBEXT): pdb_pgsql.o pdb_sql.o
+	$(CC) -shared -o $@ $^ $(PGSQL_LIBS) $(TALLOC_LIBS)
+
+multi.$(SHLIBEXT): pdb_multi.o
+	$(CC) -shared -o $@ $^ $(TALLOC_LIBS)
+
+Makefile: Makefile.in config.status
+	./config.status
+
+clean:
+	rm -f *.o *.$(SHLIBEXT)
+
+install:
+	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/pdb
+	$(INSTALL) -m 0755 $(addsuffix .$(SHLIBEXT), $(modules)) $(DESTDIR)$(LIBDIR)/pdb
+
+distclean: clean
+	rm -rf autom4te.cache config.cache config.status
+	rm -f config.h Makefile config.log
+	rm -f *~

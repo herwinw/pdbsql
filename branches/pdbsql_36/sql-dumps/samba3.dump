@@ -1,0 +1,98 @@
+-- MySQL dump 10.11
+--
+-- Host: localhost    Database: samba
+-- ------------------------------------------------------
+-- Server version	5.0.51a
+
+--
+-- Table structure for table `domains`
+--
+
+CREATE TABLE `domains` (
+  `domainname` varchar(128) NOT NULL COMMENT 'domain name',
+  `sid` varchar(64) NOT NULL COMMENT 'Security ID',
+  `minpwdlength` int(15) NOT NULL default '5' COMMENT 'minimal password lenght',
+  `pwdhistorylength` int(15) NOT NULL default '0' COMMENT 'password history length',
+  `logontochgpwd` int(2) NOT NULL default '0' COMMENT 'logon for password change',
+  `forcelogoff` int(2) NOT NULL default '-1' COMMENT 'Disconnect users outside logon hours',
+  `refusemachinepwdchange` int(2) unsigned NOT NULL default '0' COMMENT 'Allow machine password change',
+  `lockoutthreshold` int(2) NOT NULL default '0' COMMENT 'lockout users after bad logon attempts',
+  `minpwdage` int(2) NOT NULL default '0' COMMENT 'minimum password age (seconds)',
+  `maxpwdage` int(2) NOT NULL default '-1' COMMENT 'Maximum password age (seconds, -1 never)',
+  `lockoutduration` int(2) NOT NULL default '30' COMMENT 'Lockout duration minutes (-1 forever)',
+  `lockoutobservationwindow` int(2) NOT NULL default '30' COMMENT 'Reset time after lockout (minutes)',
+  `nextrid` int(2) NOT NULL COMMENT 'Next NT RID',
+  `nextuserrid` int(50) NOT NULL COMMENT 'Next NT RID to give our users',
+  `nextgrouprid` int(50) NOT NULL COMMENT 'Next NT group RID',
+  `algorithmicridbase` int(50) NOT NULL COMMENT 'RID base'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `groups`
+--
+
+CREATE TABLE `groups` (
+  `gidnumber` int(11) NOT NULL COMMENT 'Group identifyer in an domain',
+  `description` varchar(1024) default NULL COMMENT 'Descriptive Information',
+  `displayname` varchar(50) default NULL COMMENT 'Preferrence name to be used when displaying entries',
+  `grouptype` int(11) default NULL COMMENT 'NT Group type',
+  `sid` varchar(64) NOT NULL COMMENT 'Security ID'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `hosts`
+--
+
+CREATE TABLE `hosts` (
+  `id` int(10) unsigned default NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `user`
+--
+
+CREATE TABLE `user` (
+  `logon_time` int(9) default NULL,
+  `logoff_time` int(9) default NULL,
+  `kickoff_time` int(9) default NULL,
+  `pass_last_set_time` int(9) default NULL,
+  `pass_can_change_time` int(9) default '0',
+  `pass_must_change_time` int(9) default '2147483647',
+  `username` varchar(255) default NULL,
+  `domain` varchar(255) default NULL,
+  `nt_username` varchar(255) default NULL,
+  `nt_fullname` varchar(255) default NULL,
+  `home_dir` varchar(255) default NULL,
+  `dir_drive` varchar(4) default NULL,
+  `logon_script` varchar(255) default NULL,
+  `profile_path` varchar(255) default NULL,
+  `acct_desc` varchar(255) default NULL,
+  `workstations` varchar(255) default NULL,
+  `unknown_str` varchar(255) default NULL,
+  `munged_dial` varchar(255) default NULL,
+  `uid` int(9) NOT NULL auto_increment,
+  `gid` int(9) default NULL,
+  `user_sid` varchar(255) default NULL,
+  `group_sid` varchar(255) default NULL,
+  `lm_pw` varchar(255) default NULL,
+  `nt_pw` varchar(255) default NULL,
+  `acct_ctrl` int(9) default '528',
+  `logon_divs` int(9) default '168',
+  `hours_len` int(9) default '21',
+  `unknown_6` int(9) default '1260',
+  `bad_password_count` int(9) default NULL,
+  `logon_count` int(9) default '0',
+  `logon_hours` varchar(42) default NULL,
+  `password_history` text,
+  PRIMARY KEY  (`uid`),
+  KEY `username` (`username`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `sid` int(11) default NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+

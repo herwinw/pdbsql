@@ -1,0 +1,21 @@
+Installation
+------------
+If you are running out of Subversion, run ./autogen.sh to create configure.
+
+You will need to download the Samba source tree. Run:
+
+$ cd $SAMBADIR/source
+$ ./configure
+$ make proto
+$ cd $PDBSQLDIR
+$ ./autogen.sh
+$ ./configure --with-samba-dir=$SAMBADIR
+$ make
+$ make install 
+
+Run ./configure --help for a list of additional options.
+
+Configuration
+-------------
+See the other README files in this directory for details.
+
