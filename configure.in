@@ -36,17 +36,17 @@ AC_ARG_WITH(samba-dir,
 	fi
 ])
 
-if test -f "$SOURCEDIR/source/dynconfig.c"; then
- 	SOURCEDIR="$SOURCEDIR/source"
+if test -f "$SOURCEDIR/source3/dynconfig.c"; then
+ 	SOURCEDIR="$SOURCEDIR"
 else if test -f "$SOURCEDIR/dynconfig.c"; then
-	SOURCEDIR="$SOURCEDIR"
+	SOURCEDIR="$SOURCEDIR/.."
      else 
 	AC_MSG_ERROR([Unable to find Samba sources in $SOURCEDIR. Please specify correct value to --with-samba-dir=])
   fi
 fi
 
 if test -z "$LIBDIR"; then
-	prefix=`grep "^prefix=" $SOURCEDIR/Makefile | cut -d = -f 2`
+	prefix=`grep "^prefix=" $SOURCEDIR/source3/Makefile | cut -d = -f 2`
 	LIBDIR="$prefix/lib"
 fi
 
