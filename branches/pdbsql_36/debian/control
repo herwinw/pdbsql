@@ -1,8 +1,7 @@
 Source: samba-pdbsql
 Section: net
 Priority: optional
-Maintainer: Jelmer Vernooij <jelmer@samba.org>
- Herwin Weststrate <herwin@snt.utwente.nl>
+Maintainer: Herwin Weststrate <herwin@snt.utwente.nl>
 Standards-Version: 3.6.2
 Build-Depends: libmysqlclient-dev, libpq-dev, debhelper (>> 4.0.0)
 
