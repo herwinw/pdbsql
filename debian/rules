@@ -20,7 +20,7 @@ binary-arch: build
 	dh_testdir
 	dh_testroot
 	
-	dh_clean -k
+	dh_prep
 	dh_installdirs
 	$(MAKE) install DESTDIR=`pwd`/debian/tmp LIBDIR=/usr/lib/samba
 	dh_install --sourcedir=`pwd`/debian/tmp
