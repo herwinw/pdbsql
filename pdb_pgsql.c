@@ -39,11 +39,11 @@
 #undef PACKAGE_TARNAME
 #include <pg_config.h>
 
-#define CONFIG_HOST_DEFAULT				"localhost"
-#define CONFIG_USER_DEFAULT				"samba"
-#define CONFIG_PASS_DEFAULT				""
-#define CONFIG_PORT_DEFAULT				DEF_PGPORT_STR
-#define CONFIG_DB_DEFAULT				"samba"
+#define CONFIG_HOST_DEFAULT  "localhost"
+#define CONFIG_USER_DEFAULT  "samba"
+#define CONFIG_PASS_DEFAULT  ""
+#define CONFIG_PORT_DEFAULT  DEF_PGPORT_STR
+#define CONFIG_DB_DEFAULT    "samba"
 
 static int pgsqlsam_debug_level = DBGC_ALL;
 
@@ -76,7 +76,7 @@ typedef struct pdb_pgsql_search_state {
 #define SET_DATA(data,methods) { \
 	if(!methods){ \
 		DEBUG(0, ("invalid methods!\n")); \
-			return NT_STATUS_INVALID_PARAMETER; \
+		return NT_STATUS_INVALID_PARAMETER; \
 	} \
 	data = (struct pdb_pgsql_data *)methods->private_data; \
 }
@@ -85,7 +85,7 @@ typedef struct pdb_pgsql_search_state {
 #define SET_DATA_QUIET(data,methods) { \
 	if(!methods){ \
 		DEBUG(0, ("invalid methods!\n")); \
-			return; \
+		return; \
 	} \
 	data = (struct pdb_pgsql_data *)methods->private_data; \
 }
@@ -97,10 +97,10 @@ typedef struct pdb_pgsql_search_state {
 static PGconn *pgsqlsam_connect(struct pdb_pgsql_data *data)
 {
 	PGconn *handle;
-  
+
 	DEBUG(1, ("Connecting to database server, host: %s, user: %s, password: XXXXXX, database: %s, port: %s\n",
-				data->host, data->user, data->db, data->port));
-  
+			data->host, data->user, data->db, data->port));
+
 	/* Do the pgsql initialization */
 	handle = PQsetdbLogin(
 			data->host,
@@ -110,13 +110,13 @@ static PGconn *pgsqlsam_connect(struct pdb_pgsql_data *data)
 			data->db,
 			data->user,
 			data->pass);
-  
+
 	if (handle != NULL && PQstatus(handle) != CONNECTION_OK) {
 		DEBUG(0, ("Failed to connect to pgsql database: error: %s\n",
 				(handle != NULL ? PQerrorMessage(handle) : "")));
 		return NULL;
 	}
-  
+
 	DEBUG(5, ("Connected to pgsql database\n"));
 	return handle;
 }
@@ -159,7 +159,7 @@ static long PQgetlong(PGresult *r, long row, long col)
 	if (PQgetisnull(r, row, col)) {
 		return 0;
 	}
-  
+
 	return atol(PQgetvalue(r, row, col));
 }
 
@@ -169,7 +169,7 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 	struct dom_sid sid;
 	unsigned char *hours;
 	size_t hours_len = 0;
-  
+
 	if (row >= PQntuples(r)) {
 		return NT_STATUS_INVALID_PARAMETER;
 	}
@@ -192,14 +192,14 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 	pdb_set_workstations         (u, PQgetvalue(r, row, 15), PDB_SET);
 	pdb_set_comment              (u, PQgetvalue(r, row, 16), PDB_SET);
 	pdb_set_munged_dial          (u, PQgetvalue(r, row, 17), PDB_SET);
- 
+
 	pdb_set_acct_ctrl            (u, PQgetlong (r, row, 23), PDB_SET);
 	pdb_set_logon_divs           (u, PQgetlong (r, row, 24), PDB_SET);
 	pdb_set_hours_len            (u, PQgetlong (r, row, 25), PDB_SET);
 	pdb_set_bad_password_count   (u, PQgetlong (r, row, 26), PDB_SET);
 	pdb_set_logon_count          (u, PQgetlong (r, row, 27), PDB_SET);
 	pdb_set_unknown_6            (u, PQgetlong (r, row, 28), PDB_SET);
-	
+
 	hours = (unsigned char *) PQgetvalue (r, row,  29);
 	if (hours != NULL) {
 		hours = PQunescapeBytea(hours, &hours_len);
@@ -207,8 +207,8 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 			pdb_set_hours(u, hours, PQgetlong(r, row, 25), PDB_SET);
 		}
 	}
-  
-  
+
+
 	if (!PQgetisnull(r, row, 18)) {
 		string_to_sid(&sid, PQgetvalue(r, row, 18));
 		pdb_set_user_sid(u, &sid, PDB_SET);
@@ -218,7 +218,7 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 		string_to_sid(&sid, PQgetvalue(r, row, 19));
 		pdb_set_group_sid(u, &sid, PDB_SET);
 	}
-  
+
 	if (pdb_gethexpwd(PQgetvalue(r, row, 20), temp)) {
 		pdb_set_lanman_passwd(u, temp, PDB_SET);
 	}
@@ -230,32 +230,32 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 		uint8 pwhist[MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN];
 		int i;
 		char *history_string = PQgetvalue(r, row, 30);
-		
+
 		memset(&pwhist, 0, MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN);
 		for (i = 0; i < MAX_PW_HISTORY_LEN && i < strlen(history_string)/64; i++) {
 			pdb_gethexpwd(&(history_string)[i*64], &pwhist[i*PW_HISTORY_ENTRY_LEN]);
-			pdb_gethexpwd(&(history_string)[i*64+32], 
+			pdb_gethexpwd(&(history_string)[i*64+32],
 					&pwhist[i*PW_HISTORY_ENTRY_LEN+PW_HISTORY_SALT_LEN]);
 		}
 		pdb_set_pw_history(u, pwhist, strlen(history_string)/64, PDB_SET);
 	}
 
-  
+
 	/* Only use plaintext password storage when lanman and nt are NOT used */
 	if (PQgetisnull(r, row, 20) || PQgetisnull(r, row, 21)) {
 		pdb_set_plaintext_passwd(u, PQgetvalue(r, row, 22));
 	}
-  
+
 	return NT_STATUS_OK;
 }
 
 static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct samu *user, enum sql_search_field field, const char *sname)
 {
 	struct pdb_pgsql_data *data;
-  
+
 	char *esc;
 	char *query;
-  
+
 	PGresult *result;
 	NTSTATUS retval;
 
@@ -265,22 +265,22 @@ static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct sam
 		DEBUG(0, ("pdb_getsampwnam: struct samu is NULL.\n"));
 		return NT_STATUS_INVALID_PARAMETER;
 	}
-  
+
 	DEBUG(5, ("pgsqlsam_select_by_field: getting data where %d = %s(nonescaped)\n", field, sname));
-  
+
 	/* Escape sname */
 	esc = talloc_array(NULL, char, strlen(sname) * 2 + 1);
 	if (!esc) {
 		DEBUG(0, ("Can't allocate memory to store escaped name\n"));
-		return NT_STATUS_NO_MEMORY; 
+		return NT_STATUS_NO_MEMORY;
 	}
-  
+
 	/* tmp_sname = smb_xstrdup(sname); */
 	PQescapeString(esc, sname, strlen(sname));
 
 	query = sql_account_query_select(NULL, data->location, true, field, esc);
 	result = pdb_pgsql_query(data, query);
-  
+
 	/* Result? */
 	if (result == NULL)
 	{
@@ -289,12 +289,12 @@ static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct sam
 	else
 	{
 		retval = row_to_sam_account(result, 0, user);
-	    PQclear(result);
+		PQclear(result);
 	}
-  
+
 	talloc_free(esc);
 	talloc_free(query);
- 
+
 	return retval;
 }
 
@@ -308,9 +308,9 @@ static NTSTATUS pgsqlsam_getsampwnam(struct pdb_methods *methods, struct samu *u
 	size_t i, l;
 	char *lowercasename;
 	NTSTATUS result;
-  
+
 	SET_DATA(data, methods);
-  
+
 	if (!sname) {
 		DEBUG(0, ("invalid name specified"));
 		return NT_STATUS_INVALID_PARAMETER;
@@ -322,7 +322,7 @@ static NTSTATUS pgsqlsam_getsampwnam(struct pdb_methods *methods, struct samu *u
 		smb_ucs2_t uc = tolower_w(UCS2_CHAR(lowercasename[i]));
 		lowercasename[i] = UCS2_TO_CHAR(uc);
 	}
-  
+
 	result = pgsqlsam_select_by_field(methods, user, SQL_SEARCH_USER_NAME, lowercasename);
 
 	talloc_free(lowercasename);
@@ -338,9 +338,9 @@ static NTSTATUS pgsqlsam_getsampwnam(struct pdb_methods *methods, struct samu *u
 static NTSTATUS pgsqlsam_getsampwsid(struct pdb_methods *methods, struct samu *user, const struct dom_sid *sid)
 {
 	fstring sid_str;
-  
+
 	sid_to_fstring(sid_str, sid);
-  
+
 	return pgsqlsam_select_by_field(methods, user, SQL_SEARCH_USER_SID, sid_str);
 }
 
@@ -351,33 +351,33 @@ static NTSTATUS pgsqlsam_getsampwsid(struct pdb_methods *methods, struct samu *u
 static NTSTATUS pgsqlsam_delete_sam_account(struct pdb_methods *methods, struct samu *sam_pass)
 {
 	struct pdb_pgsql_data *data;
-  
+
 	const char *sname = pdb_get_username(sam_pass);
 	char *esc;
 	char *query;
-  
+
 	PGresult *result;
 	NTSTATUS retval;
- 
+
 	SET_DATA(data, methods);
-  
+
 	if (!sname) {
 		DEBUG(0, ("invalid name specified\n"));
 		return NT_STATUS_INVALID_PARAMETER;
 	}
-  
+
 	/* Escape sname */
 	esc = talloc_array(NULL, char, strlen(sname) * 2 + 1);
 	if (!esc) {
 		DEBUG(0, ("Can't allocate memory to store escaped name\n"));
 		return NT_STATUS_NO_MEMORY;
 	}
-  
+
 	PQescapeString(esc, sname, strlen(sname));
 
 	query = sql_account_query_delete(NULL, data->location, esc);
 	result = pdb_pgsql_query(data, query);
-  
+
 	if (result == NULL) {
 		retval = NT_STATUS_UNSUCCESSFUL;
 	} else {
@@ -385,10 +385,10 @@ static NTSTATUS pgsqlsam_delete_sam_account(struct pdb_methods *methods, struct 
 		retval = NT_STATUS_OK;
 		PQclear(result);
 	}
-  
+
 	talloc_free(esc);
 	talloc_free(query);
-  
+
 	return retval;
 }
 
@@ -398,14 +398,14 @@ static NTSTATUS pgsqlsam_replace_sam_account(struct pdb_methods *methods, struct
 	char *query;
 	PGresult *result;
 	NTSTATUS retval;
-  
+
 	if (!methods) {
 		DEBUG(0, ("invalid methods!\n"));
 		return NT_STATUS_INVALID_PARAMETER;
 	}
-  
+
 	data = (struct pdb_pgsql_data *) methods->private_data;
-  
+
 	if (data == NULL) {
 		DEBUG(0, ("invalid handle!\n"));
 		return NT_STATUS_INVALID_HANDLE;
@@ -419,14 +419,14 @@ static NTSTATUS pgsqlsam_replace_sam_account(struct pdb_methods *methods, struct
 
 	/* Execute the query */
 	result = pdb_pgsql_query(data, query);
-  
+
 	if (result == NULL) {
 		retval = NT_STATUS_INVALID_PARAMETER;
 	} else {
 		PQclear(result);
 		retval = NT_STATUS_OK;
 	}
-	
+
 	talloc_free(query);
 	return retval;
 }
@@ -442,17 +442,17 @@ static NTSTATUS pgsqlsam_update_sam_account(struct pdb_methods *methods, struct 
 }
 
 #if PASSDB_INTERFACE_VERSION < 19
-static bool pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods) 
+static bool pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods)
 {
 	return true;
 }
 #else
-static uint32_t pgsqlsam_capabilities(struct pdb_methods *pdb_methods) 
+static uint32_t pgsqlsam_capabilities(struct pdb_methods *pdb_methods)
 {
 	return PDB_CAP_STORE_RIDS | PDB_CAP_ADS;
 }
 #endif
-static bool pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid) 
+static bool pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid)
 {
 	return false;
 }
@@ -481,11 +481,11 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 		/* We've reached the end */
 		return false;
 	}
-	
+
 	/* Now why do we need to fill entry as rid is enough? Okay, it is a bit
 	 * of a hack, but I don't see the point in filling everything when we
 	 * never read it.
-	 */ 
+	 */
 	if (!PQgetisnull(r, row, 18)) {
 		string_to_sid(&sid, PQgetvalue(r, row, 18));
 		entry->rid = sid.sub_auths[4];
@@ -505,7 +505,7 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 
 	if ((entry->acct_flags & search_state->acct_flags) != search_state->acct_flags) {
 		return pgsqlsam_search_next_entry(search, entry);
- 
+
 	}
 
 	return true;
@@ -539,7 +539,7 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	char *query;
 
 	data = (struct pdb_pgsql_data *) pdb_methods->private_data;
-  
+
 	search_state = TALLOC_ZERO_P(search, struct pdb_pgsql_search_state);
 	if (search_state == NULL) {
 		DEBUG(0, ("talloc failed\n"));
@@ -569,14 +569,14 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	search->private_data = search_state;
 	search->next_entry = pgsqlsam_search_next_entry;
 	search->search_end = pgsqlsam_search_end;
-  
+
 	return true;
 }
 
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
-	  
+
 	struct pdb_pgsql_data *data;
 
 	pgsqlsam_debug_level = debug_add_class("pgsqlsam");
@@ -586,13 +586,13 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 			  ("pgsqlsam: Couldn't register custom debugging class!\n"));
 	}
 
-        if ( !NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method )) ) {
+	if ( !NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method )) ) {
 		return nt_status;
-        }
-  
-  
+	}
+
+
 	(*pdb_method)->name               = "pgsqlsam";
-  
+
 	(*pdb_method)->search_users       = pgsqlsam_search_users;
 	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;

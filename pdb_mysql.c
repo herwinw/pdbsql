@@ -31,11 +31,11 @@
 #include <mysql.h>
 #include <errmsg.h>
 
-#define CONFIG_HOST_DEFAULT				"localhost"
-#define CONFIG_USER_DEFAULT				"samba"
-#define CONFIG_PASS_DEFAULT				""
-#define CONFIG_PORT_DEFAULT				"3306"
-#define CONFIG_DB_DEFAULT				"samba"
+#define CONFIG_HOST_DEFAULT  "localhost"
+#define CONFIG_USER_DEFAULT  "samba"
+#define CONFIG_PASS_DEFAULT  ""
+#define CONFIG_PORT_DEFAULT  "3306"
+#define CONFIG_DB_DEFAULT    "samba"
 
 static int mysqlsam_debug_level = DBGC_ALL;
 
@@ -51,17 +51,17 @@ typedef struct pdb_mysql_data {
 #define SET_DATA(data,methods) { \
 	if(!methods){ \
 		DEBUG(0, ("invalid methods!\n")); \
-			return NT_STATUS_INVALID_PARAMETER; \
+		return NT_STATUS_INVALID_PARAMETER; \
 	} \
 	data = (struct pdb_mysql_data *)methods->private_data; \
 		if(!data || !(data->handle)){ \
 			DEBUG(0, ("invalid handle!\n")); \
-				return NT_STATUS_INVALID_HANDLE; \
+			return NT_STATUS_INVALID_HANDLE; \
 		} \
 }
 
 #define config_value( data, name, default_value ) \
-  lp_parm_const_string( GLOBAL_SECTION_SNUM, (data)->location, name, default_value )
+	lp_parm_const_string( GLOBAL_SECTION_SNUM, (data)->location, name, default_value )
 
 static long xatol(const char *d)
 {
@@ -76,16 +76,16 @@ static NTSTATUS pdb_mysql_connect(struct pdb_mysql_data *data) {
 			config_value(data, "mysql user", CONFIG_USER_DEFAULT),
 			config_value(data, "mysql password", CONFIG_PASS_DEFAULT),
 			config_value(data, "mysql database", CONFIG_DB_DEFAULT),
-			xatol(config_value (data, "mysql port", CONFIG_PORT_DEFAULT)), 
+			xatol(config_value (data, "mysql port", CONFIG_PORT_DEFAULT)),
 			NULL, 0)) {
 		DEBUG(0,
-			  ("Failed to connect to mysql database: error: %s\n",
-			   mysql_error(data->handle)));
+				("Failed to connect to mysql database: error: %s\n",
+				mysql_error(data->handle)));
 		return NT_STATUS_UNSUCCESSFUL;
 	}
-	
+
 	DEBUG(5, ("Connected to mysql db\n"));
-	
+
 	return NT_STATUS_OK;
 }
 
@@ -95,7 +95,7 @@ static bool pdb_mysql_query(struct pdb_mysql_data *data, char *query, int *mysql
 
 	DEBUG(5, ("Executing query %s\n", query));
 	res = mysql_query(data->handle, query);
-	
+
 	/* [SYN] If the server has gone away, reconnect and retry */
 	if (res && mysql_errno(data->handle) == CR_SERVER_GONE_ERROR) {
 		DEBUG(5, ("MySQL server has gone away, reconnecting and retrying.\n"));
@@ -112,7 +112,7 @@ static bool pdb_mysql_query(struct pdb_mysql_data *data, char *query, int *mysql
 	if (res)
 	{
 		DEBUG(0,
-			("Error while executing MySQL query %s\n", 
+			("Error while executing MySQL query %s\n",
 				mysql_error(data->handle)));
 	}
 
@@ -179,15 +179,15 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 	pdb_set_logon_count(u, xatol(row[27]), PDB_SET);
 	pdb_set_unknown_6(u, xatol(row[28]), PDB_SET);
 	pdb_set_hours(u, (uint8 *)row[29], xatol(row[25]), PDB_SET);
-	
+
 	if (row[30]) {
 		uint8 pwhist[MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN];
 		int i;
-		
+
 		memset(&pwhist, 0, MAX_PW_HISTORY_LEN * PW_HISTORY_ENTRY_LEN);
 		for (i = 0; i < MAX_PW_HISTORY_LEN && i < strlen(row[30])/64; i++) {
 			pdb_gethexpwd(&(row[30])[i*64], &pwhist[i*PW_HISTORY_ENTRY_LEN]);
-			pdb_gethexpwd(&(row[30])[i*64+32], 
+			pdb_gethexpwd(&(row[30])[i*64+32],
 					&pwhist[i*PW_HISTORY_ENTRY_LEN+PW_HISTORY_SALT_LEN]);
 		}
 		pdb_set_pw_history(u, pwhist, strlen(row[30])/64, PDB_SET);
@@ -197,7 +197,7 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 }
 
 static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct samu * user,
-						 enum sql_search_field field, const char *sname)
+						enum sql_search_field field, const char *sname)
 {
 	char *esc_sname;
 	char *query;
@@ -213,14 +213,14 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 	esc_sname = talloc_array(mem_ctx, char, strlen(sname) * 2 + 1);
 	if (!esc_sname) {
 		talloc_free(mem_ctx);
-		return NT_STATUS_NO_MEMORY; 
+		return NT_STATUS_NO_MEMORY;
 	}
 
 	tmp_sname = talloc_strdup(mem_ctx, sname);
-	
+
 	/* Escape sname */
 	mysql_real_escape_string(data->handle, esc_sname, tmp_sname,
-							 strlen(tmp_sname));
+							strlen(tmp_sname));
 
 	talloc_free(tmp_sname);
 
@@ -240,7 +240,7 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 		talloc_free(mem_ctx);
 		return NT_STATUS_UNSUCCESSFUL;
 	}
-	
+
 	talloc_free(query);
 	res = mysql_store_result(data->handle);
 	if (res == NULL) {
@@ -249,7 +249,7 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
 		talloc_free(mem_ctx);
 		return NT_STATUS_UNSUCCESSFUL;
 	}
-	
+
 	ret = row_to_sam_account(res, user);
 	mysql_free_result(res);
 	talloc_free(mem_ctx);
@@ -262,7 +262,7 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
  ******************************************************************/
 
 static NTSTATUS mysqlsam_getsampwnam(struct pdb_methods *methods, struct samu * user,
-					 const char *sname)
+					const char *sname)
 {
 	struct pdb_mysql_data *data;
 
@@ -283,7 +283,7 @@ static NTSTATUS mysqlsam_getsampwnam(struct pdb_methods *methods, struct samu * 
  **************************************************************************/
 
 static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu * user,
-					 const struct dom_sid * sid)
+					const struct dom_sid * sid)
 {
 	struct pdb_mysql_data *data;
 	fstring sid_str;
@@ -292,12 +292,12 @@ static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu * 
 
 	sid_to_fstring(sid_str, sid);
 	/* sid_string_dbg(sid); */
-        
+
 	return mysqlsam_select_by_field(methods, user, SQL_SEARCH_USER_SID, sid_str);
 }
 
 /***************************************************************************
-  Delete a sam account 
+  Delete a sam account
  ****************************************************************************/
 
 static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
@@ -329,18 +329,18 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 	}
 
 	mem_ctx = talloc_init("mysqlsam_delete_sam_account");
-	
+
 	/* Escape sname */
 	esc = talloc_array(mem_ctx, char, strlen(sname) * 2 + 1);
 	if (!esc) {
 		DEBUG(0, ("Can't allocate memory to store escaped name\n"));
 		return NT_STATUS_NO_MEMORY;
 	}
-	
+
 	tmp_sname = talloc_strdup(mem_ctx, sname);
-	
+
 	mysql_real_escape_string(data->handle, esc, tmp_sname,
-							 strlen(tmp_sname));
+							strlen(tmp_sname));
 
 	talloc_free(tmp_sname);
 
@@ -363,7 +363,7 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 }
 
 static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
-							 struct samu * newpwd, char isupdate)
+							struct samu * newpwd, char isupdate)
 {
 	struct pdb_mysql_data *data;
 	char *query;
@@ -384,8 +384,8 @@ static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
 	query = sql_account_query_update(NULL, data->location, newpwd, isupdate);
  	if ( query == NULL ) /* Nothing to update. */
  		return NT_STATUS_OK;
-	
-	
+
+
 	if (pdb_mysql_query(data, query, &mysql_ret) == false)
 	{
 		talloc_free(query);
@@ -451,7 +451,7 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 	entry->account_name = talloc_strdup(search, row[6]);
 	entry->fullname = talloc_strdup(search, row[9]);
 	entry->description = talloc_strdup(search, row[14]);
-        
+
 	state->current += 1;
 
 	if ((entry->account_name == NULL)) {
@@ -533,10 +533,10 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 		DEBUG(0,("mysqlsam: Couldn't register custom debugging class!\n"));
 	}
 
-        if (!NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method ))) {
+	if (!NT_STATUS_IS_OK(nt_status = make_pdb_method( pdb_method ))) {
 		return nt_status;
-        }
-	
+	}
+
 	(*pdb_method)->name = "mysqlsam";
 
 	(*pdb_method)->search_users = mysqlsam_search_users;
@@ -565,11 +565,11 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	data->location = talloc_strdup(data, location);
 
 	DEBUG(1,
-		  ("Connecting to database server, host: %s, user: %s, database: %s, port: %ld\n",
-		   config_value(data, "mysql host", CONFIG_HOST_DEFAULT),
-		   config_value(data, "mysql user", CONFIG_USER_DEFAULT),
-		   config_value(data, "mysql database", CONFIG_DB_DEFAULT),
-		   xatol(config_value(data, "mysql port", CONFIG_PORT_DEFAULT))));
+		("Connecting to database server, host: %s, user: %s, database: %s, port: %ld\n",
+		config_value(data, "mysql host", CONFIG_HOST_DEFAULT),
+		config_value(data, "mysql user", CONFIG_USER_DEFAULT),
+		config_value(data, "mysql database", CONFIG_DB_DEFAULT),
+		xatol(config_value(data, "mysql port", CONFIG_PORT_DEFAULT))));
 
 	/* Do the mysql initialization */
 	data->handle = mysql_init(NULL);
@@ -581,7 +581,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	if(!sql_account_config_valid(data->location)) {
 		return NT_STATUS_INVALID_PARAMETER;
 	}
-	
+
 	if (!NT_STATUS_IS_OK(pdb_mysql_connect(data))) {
 		return NT_STATUS_UNSUCCESSFUL;
 	}
@@ -589,7 +589,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	return NT_STATUS_OK;
 }
 
-NTSTATUS init_samba_module(void) 
+NTSTATUS init_samba_module(void)
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "mysql", mysqlsam_init);
 }
