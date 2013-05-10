@@ -2,17 +2,17 @@
  * Common PDB SQL backend functions
  * Copyright (C) Jelmer Vernooij 2003-2004
  * Copyright (C) Collen Blijenberg 2007-2008
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 675
  * Mass Ave, Cambridge, MA 02139, USA.
@@ -23,38 +23,38 @@
 #undef DBGC_CLASS
 #define DBGC_CLASS DBGC_PASSDB
 
-#define CONFIG_TABLE_DEFAULT				"user"
-#define CONFIG_LOGON_TIME_DEFAULT			"logon_time"
-#define CONFIG_LOGOFF_TIME_DEFAULT			"logoff_time"
-#define CONFIG_KICKOFF_TIME_DEFAULT			"kickoff_time"
-#define CONFIG_PASS_LAST_SET_TIME_DEFAULT		"pass_last_set_time"
-#define CONFIG_PASS_CAN_CHANGE_TIME_DEFAULT		"pass_can_change_time"
-#define CONFIG_PASS_MUST_CHANGE_TIME_DEFAULT 		"pass_must_change_time"
-#define CONFIG_USERNAME_DEFAULT 			"username"
-#define CONFIG_DOMAIN_DEFAULT				"domain"
-#define CONFIG_NT_USERNAME_DEFAULT  			"nt_username"
-#define CONFIG_FULLNAME_DEFAULT				"nt_fullname"
-#define CONFIG_HOME_DIR_DEFAULT				"home_dir"
-#define CONFIG_DIR_DRIVE_DEFAULT			"dir_drive"
-#define CONFIG_LOGON_SCRIPT_DEFAULT			"logon_script"
-#define CONFIG_PROFILE_PATH_DEFAULT			"profile_path"
-#define CONFIG_ACCT_DESC_DEFAULT			"acct_desc"
-#define CONFIG_WORKSTATIONS_DEFAULT			"workstations"
-#define CONFIG_UNKNOWN_STR_DEFAULT			"unknown_str"
-#define CONFIG_MUNGED_DIAL_DEFAULT			"munged_dial"
-#define CONFIG_USER_SID_DEFAULT				"user_sid"
-#define CONFIG_GROUP_SID_DEFAULT			"group_sid"
-#define CONFIG_LM_PW_DEFAULT				"lm_pw"
-#define CONFIG_NT_PW_DEFAULT				"nt_pw"
-#define CONFIG_PLAIN_PW_DEFAULT				"NULL"
-#define CONFIG_ACCT_CTRL_DEFAULT			"acct_ctrl"
-#define CONFIG_LOGON_DIVS_DEFAULT			"logon_divs"
-#define CONFIG_HOURS_LEN_DEFAULT			"hours_len"
-#define CONFIG_BAD_PASSWORD_COUNT_DEFAULT		"bad_password_count"
-#define CONFIG_LOGON_COUNT_DEFAULT			"logon_count"
-#define CONFIG_UNKNOWN_6_DEFAULT			"unknown_6"
-#define CONFIG_LOGON_HOURS_DEFAULT			"logon_hours"
-#define CONFIG_PASSWORD_HISTORY_DEFAULT			"password_history"
+#define CONFIG_TABLE_DEFAULT                  "user"
+#define CONFIG_LOGON_TIME_DEFAULT             "logon_time"
+#define CONFIG_LOGOFF_TIME_DEFAULT            "logoff_time"
+#define CONFIG_KICKOFF_TIME_DEFAULT           "kickoff_time"
+#define CONFIG_PASS_LAST_SET_TIME_DEFAULT     "pass_last_set_time"
+#define CONFIG_PASS_CAN_CHANGE_TIME_DEFAULT   "pass_can_change_time"
+#define CONFIG_PASS_MUST_CHANGE_TIME_DEFAULT  "pass_must_change_time"
+#define CONFIG_USERNAME_DEFAULT               "username"
+#define CONFIG_DOMAIN_DEFAULT                 "domain"
+#define CONFIG_NT_USERNAME_DEFAULT            "nt_username"
+#define CONFIG_FULLNAME_DEFAULT               "nt_fullname"
+#define CONFIG_HOME_DIR_DEFAULT               "home_dir"
+#define CONFIG_DIR_DRIVE_DEFAULT              "dir_drive"
+#define CONFIG_LOGON_SCRIPT_DEFAULT           "logon_script"
+#define CONFIG_PROFILE_PATH_DEFAULT           "profile_path"
+#define CONFIG_ACCT_DESC_DEFAULT              "acct_desc"
+#define CONFIG_WORKSTATIONS_DEFAULT           "workstations"
+#define CONFIG_UNKNOWN_STR_DEFAULT            "unknown_str"
+#define CONFIG_MUNGED_DIAL_DEFAULT            "munged_dial"
+#define CONFIG_USER_SID_DEFAULT               "user_sid"
+#define CONFIG_GROUP_SID_DEFAULT              "group_sid"
+#define CONFIG_LM_PW_DEFAULT                  "lm_pw"
+#define CONFIG_NT_PW_DEFAULT                  "nt_pw"
+#define CONFIG_PLAIN_PW_DEFAULT               "NULL"
+#define CONFIG_ACCT_CTRL_DEFAULT              "acct_ctrl"
+#define CONFIG_LOGON_DIVS_DEFAULT             "logon_divs"
+#define CONFIG_HOURS_LEN_DEFAULT              "hours_len"
+#define CONFIG_BAD_PASSWORD_COUNT_DEFAULT     "bad_password_count"
+#define CONFIG_LOGON_COUNT_DEFAULT            "logon_count"
+#define CONFIG_UNKNOWN_6_DEFAULT              "unknown_6"
+#define CONFIG_LOGON_HOURS_DEFAULT            "logon_hours"
+#define CONFIG_PASSWORD_HISTORY_DEFAULT       "password_history"
 
 /* Used to construct insert and update queries */
 
@@ -72,7 +72,7 @@ static void pdb_sql_int_field(struct pdb_sql_query *q, const char *name, long va
 	if (q->update) {
 		q->part1 =
 			talloc_asprintf_append(q->part1,
-								   "%s = %ld,", name, value);
+					"%s = %ld,", name, value);
 	} else {
 		q->part1 =
 			talloc_asprintf_append(q->part1, "%s,", name);
@@ -99,12 +99,12 @@ char *sql_escape_string(TALLOC_CTX *mem_ctx, const char *unesc)
 	}
 
 	esc[pos_esc] = '\0';
-	
+
 	return esc;
 }
 
 static NTSTATUS pdb_sql_string_field(struct pdb_sql_query *q,
-					   const char *name, const char *value)
+		const char *name, const char *value)
 {
 	char *esc_value;
 
@@ -116,13 +116,13 @@ static NTSTATUS pdb_sql_string_field(struct pdb_sql_query *q,
 	if (q->update) {
 		q->part1 =
 			talloc_asprintf_append(q->part1,
-								   "%s = '%s',", name, esc_value);
+					"%s = '%s',", name, esc_value);
 	} else {
 		q->part1 =
 			talloc_asprintf_append(q->part1, "%s,", name);
 		q->part2 =
 			talloc_asprintf_append(q->part2, "'%s',",
-								   esc_value);
+					esc_value);
 	}
 
 	talloc_free(esc_value);
@@ -133,7 +133,7 @@ static NTSTATUS pdb_sql_string_field(struct pdb_sql_query *q,
 #define config_value(data,name,default_value) \
 	lp_parm_const_string(GLOBAL_SECTION_SNUM, data, name, default_value)
 
-static const char * config_value_write(const char *location, const char *name, const char *default_value) 
+static const char * config_value_write(const char *location, const char *name, const char *default_value)
 {
 	char const *v = NULL;
 	char const *swrite = NULL;
@@ -149,7 +149,7 @@ static const char * config_value_write(const char *location, const char *name, c
 	if (!swrite) {
 
 		/* Updating NULL does not make much sense */
-		if (!strcmp(v, "NULL")) 
+		if (!strcmp(v, "NULL"))
 			return NULL;
 
 		return v;
@@ -198,19 +198,19 @@ char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, bool updat
 	char *query;
 
 	switch(field) {
-	case SQL_SEARCH_NONE: 
-		field_string = "'1'"; 
-		value = "1"; 
+	case SQL_SEARCH_NONE:
+		field_string = "'1'";
+		value = "1";
 		break;
-		
-	case SQL_SEARCH_USER_SID: 
-		field_string = config_value_read(data, "user sid column", 
-										 CONFIG_USER_SID_DEFAULT); 
+
+	case SQL_SEARCH_USER_SID:
+		field_string = config_value_read(data, "user sid column",
+										CONFIG_USER_SID_DEFAULT);
 		break;
-		
-	case SQL_SEARCH_USER_NAME: 
-		field_string = config_value_read(data, "username column", 
-										 CONFIG_USERNAME_DEFAULT);
+
+	case SQL_SEARCH_USER_NAME:
+		field_string = config_value_read(data, "username column",
+										CONFIG_USERNAME_DEFAULT);
 		break;
 	default:
 		field_string = "unknown";
@@ -218,83 +218,83 @@ char *sql_account_query_select(TALLOC_CTX *mem_ctx, const char *data, bool updat
 	}
 
 	query = talloc_asprintf(mem_ctx,
-			 "SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = '%s'",
-			 config_value_read(data, "logon time column",
-							   CONFIG_LOGON_TIME_DEFAULT),
-			 config_value_read(data, "logoff time column",
-							   CONFIG_LOGOFF_TIME_DEFAULT),
-			 config_value_read(data, "kickoff time column",
-							   CONFIG_KICKOFF_TIME_DEFAULT),
-			 config_value_read(data, "pass last set time column",
-							   CONFIG_PASS_LAST_SET_TIME_DEFAULT),
-			 config_value_read(data, "pass can change time column",
-							   CONFIG_PASS_CAN_CHANGE_TIME_DEFAULT),
-			 config_value_read(data, "pass must change time column",
-							   CONFIG_PASS_MUST_CHANGE_TIME_DEFAULT),
-			 config_value_read(data, "username column",
-							   CONFIG_USERNAME_DEFAULT),
-			 config_value_read(data, "domain column",
-							   CONFIG_DOMAIN_DEFAULT),
-			 config_value_read(data, "nt username column",
-							   CONFIG_NT_USERNAME_DEFAULT),
-			 config_value_read(data, "fullname column",
-							   CONFIG_FULLNAME_DEFAULT),
-			 config_value_read(data, "home dir column",
-							   CONFIG_HOME_DIR_DEFAULT),
-			 config_value_read(data, "dir drive column",
-							   CONFIG_DIR_DRIVE_DEFAULT),
-			 config_value_read(data, "logon script column",
-							   CONFIG_LOGON_SCRIPT_DEFAULT),
-			 config_value_read(data, "profile path column",
-							   CONFIG_PROFILE_PATH_DEFAULT),
-			 config_value_read(data, "acct desc column",
-							   CONFIG_ACCT_DESC_DEFAULT),
-			 config_value_read(data, "workstations column",
-							   CONFIG_WORKSTATIONS_DEFAULT),
-			 config_value_read(data, "unknown string column",
-							   CONFIG_UNKNOWN_STR_DEFAULT),
-			 config_value_read(data, "munged dial column",
-							   CONFIG_MUNGED_DIAL_DEFAULT),
-			 config_value_read(data, "user sid column",
-							   CONFIG_USER_SID_DEFAULT),
-			 config_value_read(data, "group sid column",
-							   CONFIG_GROUP_SID_DEFAULT),
-			 config_value_read(data, "lanman pass column",
-							   CONFIG_LM_PW_DEFAULT),
-			 config_value_read(data, "nt pass column",
-							   CONFIG_NT_PW_DEFAULT),
-			 config_value_read(data, "plain pass column",
-							   CONFIG_PLAIN_PW_DEFAULT),
-			 config_value_read(data, "acct ctrl column",
-							   CONFIG_ACCT_CTRL_DEFAULT),
-			 config_value_read(data, "logon divs column",
-							   CONFIG_LOGON_DIVS_DEFAULT),
-			 config_value_read(data, "hours len column",
-							   CONFIG_HOURS_LEN_DEFAULT),
-			 config_value_read(data, "bad password count column",
-							   CONFIG_BAD_PASSWORD_COUNT_DEFAULT),
-			 config_value_read(data, "logon count column",
-							   CONFIG_LOGON_COUNT_DEFAULT),
-			 config_value_read(data, "unknown 6 column",
-							   CONFIG_UNKNOWN_6_DEFAULT),
-			 config_value_read(data, "logon hours column",
-							   CONFIG_LOGON_HOURS_DEFAULT),
-			 config_value_read(data, "password history column",
-							   CONFIG_PASSWORD_HISTORY_DEFAULT),
-			 config_value(data, "table", CONFIG_TABLE_DEFAULT), 
-			 field_string, value
-				 );
-	 return (char *)query;
+			"SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM %s WHERE %s = '%s'",
+			config_value_read(data, "logon time column",
+				CONFIG_LOGON_TIME_DEFAULT),
+			config_value_read(data, "logoff time column",
+							CONFIG_LOGOFF_TIME_DEFAULT),
+			config_value_read(data, "kickoff time column",
+							CONFIG_KICKOFF_TIME_DEFAULT),
+			config_value_read(data, "pass last set time column",
+							CONFIG_PASS_LAST_SET_TIME_DEFAULT),
+			config_value_read(data, "pass can change time column",
+							CONFIG_PASS_CAN_CHANGE_TIME_DEFAULT),
+			config_value_read(data, "pass must change time column",
+							CONFIG_PASS_MUST_CHANGE_TIME_DEFAULT),
+			config_value_read(data, "username column",
+							CONFIG_USERNAME_DEFAULT),
+			config_value_read(data, "domain column",
+							CONFIG_DOMAIN_DEFAULT),
+			config_value_read(data, "nt username column",
+							CONFIG_NT_USERNAME_DEFAULT),
+			config_value_read(data, "fullname column",
+							CONFIG_FULLNAME_DEFAULT),
+			config_value_read(data, "home dir column",
+							CONFIG_HOME_DIR_DEFAULT),
+			config_value_read(data, "dir drive column",
+							CONFIG_DIR_DRIVE_DEFAULT),
+			config_value_read(data, "logon script column",
+							CONFIG_LOGON_SCRIPT_DEFAULT),
+			config_value_read(data, "profile path column",
+							CONFIG_PROFILE_PATH_DEFAULT),
+			config_value_read(data, "acct desc column",
+							CONFIG_ACCT_DESC_DEFAULT),
+			config_value_read(data, "workstations column",
+							CONFIG_WORKSTATIONS_DEFAULT),
+			config_value_read(data, "unknown string column",
+							CONFIG_UNKNOWN_STR_DEFAULT),
+			config_value_read(data, "munged dial column",
+							CONFIG_MUNGED_DIAL_DEFAULT),
+			config_value_read(data, "user sid column",
+							CONFIG_USER_SID_DEFAULT),
+			config_value_read(data, "group sid column",
+							CONFIG_GROUP_SID_DEFAULT),
+			config_value_read(data, "lanman pass column",
+							CONFIG_LM_PW_DEFAULT),
+			config_value_read(data, "nt pass column",
+							CONFIG_NT_PW_DEFAULT),
+			config_value_read(data, "plain pass column",
+							CONFIG_PLAIN_PW_DEFAULT),
+			config_value_read(data, "acct ctrl column",
+							CONFIG_ACCT_CTRL_DEFAULT),
+			config_value_read(data, "logon divs column",
+							CONFIG_LOGON_DIVS_DEFAULT),
+			config_value_read(data, "hours len column",
+							CONFIG_HOURS_LEN_DEFAULT),
+			config_value_read(data, "bad password count column",
+							CONFIG_BAD_PASSWORD_COUNT_DEFAULT),
+			config_value_read(data, "logon count column",
+							CONFIG_LOGON_COUNT_DEFAULT),
+			config_value_read(data, "unknown 6 column",
+							CONFIG_UNKNOWN_6_DEFAULT),
+			config_value_read(data, "logon hours column",
+							CONFIG_LOGON_HOURS_DEFAULT),
+			config_value_read(data, "password history column",
+							CONFIG_PASSWORD_HISTORY_DEFAULT),
+			config_value(data, "table", CONFIG_TABLE_DEFAULT),
+			field_string, value
+				);
+	return (char *)query;
 }
 
-char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data, const char *esc) 
+char *sql_account_query_delete(TALLOC_CTX *mem_ctx, const char *data, const char *esc)
 {
 	char *query;
-	
+
 	query = talloc_asprintf(mem_ctx, "DELETE FROM %s WHERE %s = '%s'",
-			 config_value(data, "table", CONFIG_TABLE_DEFAULT),
-			 config_value_read(data, "username column",
-							   CONFIG_USERNAME_DEFAULT), esc);
+			config_value(data, "table", CONFIG_TABLE_DEFAULT),
+			config_value_read(data, "username column",
+				CONFIG_USERNAME_DEFAULT), esc);
 	return query;
 }
 
@@ -304,293 +304,293 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 	fstring temp;
 	fstring sid_str;
 	pdb_sql_query *query;
- 	int some_field_affected = 0;
+	int some_field_affected = 0;
 
 	query = talloc(mem_ctx, pdb_sql_query);
 	query->update = isupdate;
 
-	/* I know this is somewhat overkill but only the talloc 
-	 * functions have asprint_append and the 'normal' asprintf 
+	/* I know this is somewhat overkill but only the talloc
+	 * functions have asprint_append and the 'normal' asprintf
 	 * is a GNU extension */
 	query->part2 = talloc_asprintf(query, "%s", "");
 	if (query->update) {
 		query->part1 =
 			talloc_asprintf(query, "UPDATE %s SET ",
-							config_value(location, "table",
-										 CONFIG_TABLE_DEFAULT));
+					config_value(location, "table",
+						CONFIG_TABLE_DEFAULT));
 	} else {
 		query->part1 =
 			talloc_asprintf(query, "INSERT INTO %s (",
-							config_value(location, "table",
-										 CONFIG_TABLE_DEFAULT));
+					config_value(location, "table",
+						CONFIG_TABLE_DEFAULT));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_ACCTCTRL)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-						config_value_write(location, "acct ctrl column",
-										   CONFIG_ACCT_CTRL_DEFAULT),
-						pdb_get_acct_ctrl(newpwd));
+				config_value_write(location, "acct ctrl column",
+					CONFIG_ACCT_CTRL_DEFAULT),
+				pdb_get_acct_ctrl(newpwd));
 	}
-	
+
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LOGONTIME)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "logon time column",
-											   CONFIG_LOGON_TIME_DEFAULT),
-							pdb_get_logon_time(newpwd));
+				config_value_write(location,
+					"logon time column",
+					CONFIG_LOGON_TIME_DEFAULT),
+				pdb_get_logon_time(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LOGOFFTIME)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "logoff time column",
-											   CONFIG_LOGOFF_TIME_DEFAULT),
-							pdb_get_logoff_time(newpwd));
+				config_value_write(location,
+					"logoff time column",
+					CONFIG_LOGOFF_TIME_DEFAULT),
+				pdb_get_logoff_time(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_KICKOFFTIME)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "kickoff time column",
-											   CONFIG_KICKOFF_TIME_DEFAULT),
-							pdb_get_kickoff_time(newpwd));
+				config_value_write(location,
+					"kickoff time column",
+					CONFIG_KICKOFF_TIME_DEFAULT),
+				pdb_get_kickoff_time(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_CANCHANGETIME)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "pass can change time column",
-											   CONFIG_PASS_CAN_CHANGE_TIME_DEFAULT),
-							pdb_get_pass_can_change_time(newpwd));
+				config_value_write(location,
+					"pass can change time column",
+					CONFIG_PASS_CAN_CHANGE_TIME_DEFAULT),
+				pdb_get_pass_can_change_time(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_MUSTCHANGETIME)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "pass must change time column",
-											   CONFIG_PASS_MUST_CHANGE_TIME_DEFAULT),
-							pdb_get_pass_must_change_time(newpwd));
+				config_value_write(location,
+					"pass must change time column",
+					CONFIG_PASS_MUST_CHANGE_TIME_DEFAULT),
+				pdb_get_pass_must_change_time(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PASSLASTSET)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "pass last set time column",
-											   CONFIG_PASS_LAST_SET_TIME_DEFAULT),
-							pdb_get_pass_last_set_time(newpwd));
+				config_value_write(location,
+					"pass last set time column",
+					CONFIG_PASS_LAST_SET_TIME_DEFAULT),
+				pdb_get_pass_last_set_time(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_HOURSLEN)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "hours len column",
-											   CONFIG_HOURS_LEN_DEFAULT),
-							pdb_get_hours_len(newpwd));
+				config_value_write(location,
+					"hours len column",
+					CONFIG_HOURS_LEN_DEFAULT),
+				pdb_get_hours_len(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LOGONDIVS)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_int_field(query,
-							config_value_write(location,
-											   "logon divs column",
-											   CONFIG_LOGON_DIVS_DEFAULT),
-							pdb_get_logon_divs(newpwd));
+				config_value_write(location,
+					"logon divs column",
+					CONFIG_LOGON_DIVS_DEFAULT),
+				pdb_get_logon_divs(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_USERSID)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_string_field(query,
-						   config_value_write(location, "user sid column",
-											  CONFIG_USER_SID_DEFAULT),
-						   sid_to_fstring(sid_str, 
-						   /* sid_string_dbg(sid, */
-						   				 pdb_get_user_sid(newpwd)));
-	}
+				config_value_write(location, "user sid column",
+					CONFIG_USER_SID_DEFAULT),
+				sid_to_fstring(sid_str,
+					/* sid_string_dbg(sid, */
+			pdb_get_user_sid(newpwd)));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_GROUPSID)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location, "group sid column",
-											  CONFIG_GROUP_SID_DEFAULT),
-						   sid_to_fstring(sid_str,
-										 pdb_get_group_sid(newpwd)));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_GROUPSID)) {
+				some_field_affected = 1;
+				pdb_sql_string_field(query,
+					config_value_write(location, "group sid column",
+						CONFIG_GROUP_SID_DEFAULT),
+					sid_to_fstring(sid_str,
+						pdb_get_group_sid(newpwd)));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_USERNAME)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location, "username column",
-											  CONFIG_USERNAME_DEFAULT),
-						   pdb_get_username(newpwd));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_USERNAME)) {
+				some_field_affected = 1;
+				pdb_sql_string_field(query,
+					config_value_write(location, "username column",
+						CONFIG_USERNAME_DEFAULT),
+					pdb_get_username(newpwd));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_DOMAIN)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location, "domain column",
-											  CONFIG_DOMAIN_DEFAULT),
-						   pdb_get_domain(newpwd));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_DOMAIN)) {
+					some_field_affected = 1;
+					pdb_sql_string_field(query,
+							config_value_write(location, "domain column",
+								CONFIG_DOMAIN_DEFAULT),
+							pdb_get_domain(newpwd));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_USERNAME)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location,
-											  "nt username column",
-											  CONFIG_NT_USERNAME_DEFAULT),
-						   pdb_get_nt_username(newpwd));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_USERNAME)) {
+					some_field_affected = 1;
+					pdb_sql_string_field(query,
+							config_value_write(location,
+								"nt username column",
+								CONFIG_NT_USERNAME_DEFAULT),
+							pdb_get_nt_username(newpwd));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_FULLNAME)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location, "fullname column",
-											  CONFIG_FULLNAME_DEFAULT),
-						   pdb_get_fullname(newpwd));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_FULLNAME)) {
+					some_field_affected = 1;
+					pdb_sql_string_field(query,
+							config_value_write(location, "fullname column",
+								CONFIG_FULLNAME_DEFAULT),
+							pdb_get_fullname(newpwd));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LOGONSCRIPT)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location,
-											  "logon script column",
-											  CONFIG_LOGON_SCRIPT_DEFAULT),
-						   pdb_get_logon_script(newpwd));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LOGONSCRIPT)) {
+					some_field_affected = 1;
+					pdb_sql_string_field(query,
+							config_value_write(location,
+								"logon script column",
+								CONFIG_LOGON_SCRIPT_DEFAULT),
+							pdb_get_logon_script(newpwd));
+				}
 
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PROFILE)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						   config_value_write(location,
-											  "profile path column",
-											  CONFIG_PROFILE_PATH_DEFAULT),
-						   pdb_get_profile_path(newpwd));
-	}
-	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_ACCTDESC)) {
- 		some_field_affected = 1;
-		pdb_sql_string_field(query,
-						    config_value_write(location, "acct desc column",
-										   CONFIG_ACCT_DESC_DEFAULT),
-						pdb_get_acct_desc(newpwd));
-	}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PROFILE)) {
+					some_field_affected = 1;
+					pdb_sql_string_field(query,
+							config_value_write(location,
+								"profile path column",
+								CONFIG_PROFILE_PATH_DEFAULT),
+							pdb_get_profile_path(newpwd));
+				}
+				if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_ACCTDESC)) {
+					some_field_affected = 1;
+					pdb_sql_string_field(query,
+							config_value_write(location, "acct desc column",
+								CONFIG_ACCT_DESC_DEFAULT),
+							pdb_get_acct_desc(newpwd));
+				}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_DRIVE)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_string_field(query,
-						   config_value_write(location, "dir drive column",
-											  CONFIG_DIR_DRIVE_DEFAULT),
-						   pdb_get_dir_drive(newpwd));
+				config_value_write(location, "dir drive column",
+					CONFIG_DIR_DRIVE_DEFAULT),
+				pdb_get_dir_drive(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_SMBHOME)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_string_field(query,
-						   config_value_write(location, "home dir column",
-											  CONFIG_HOME_DIR_DEFAULT),
-						   pdb_get_homedir(newpwd));
+				config_value_write(location, "home dir column",
+					CONFIG_HOME_DIR_DEFAULT),
+				pdb_get_homedir(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_WORKSTATIONS)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_string_field(query,
-						   config_value_write(location,
-											  "workstations column",
-											  CONFIG_WORKSTATIONS_DEFAULT),
-						   pdb_get_workstations(newpwd));
+				config_value_write(location,
+					"workstations column",
+					CONFIG_WORKSTATIONS_DEFAULT),
+				pdb_get_workstations(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_COMMENT)) {
- 		some_field_affected = 1;
+		some_field_affected = 1;
 		pdb_sql_string_field(query,
-						   config_value_write(location,
-											  "unknown string column",
-											  CONFIG_UNKNOWN_STR_DEFAULT),
-						   pdb_get_comment(newpwd));
+				config_value_write(location,
+					"unknown string column",
+					CONFIG_UNKNOWN_STR_DEFAULT),
+				pdb_get_comment(newpwd));
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_LMPASSWD)) {
 		some_field_affected = 1;
 		pdb_sethexpwd(temp, pdb_get_lanman_passwd(newpwd),
-					  pdb_get_acct_ctrl(newpwd));
+				pdb_get_acct_ctrl(newpwd));
 		pdb_sql_string_field(query,
-						   config_value_write(location,
-											  "lanman pass column",
-											  CONFIG_LM_PW_DEFAULT), temp);
+				config_value_write(location,
+					"lanman pass column",
+					CONFIG_LM_PW_DEFAULT), temp);
 	}
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_NTPASSWD)) {
 		some_field_affected = 1;
 		pdb_sethexpwd(temp, pdb_get_nt_passwd(newpwd),
-					  pdb_get_acct_ctrl(newpwd));
+				pdb_get_acct_ctrl(newpwd));
 		pdb_sql_string_field(query,
-						   config_value_write(location, "nt pass column",
-											  CONFIG_NT_PW_DEFAULT), temp);
+				config_value_write(location, "nt pass column",
+					CONFIG_NT_PW_DEFAULT), temp);
 	}
 
- 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_HOURS)) {
- 		some_field_affected = 1;
- 		pdb_sql_string_field(query,
- 							config_value_write(location,
- 											   "logon hours column",
- 											   CONFIG_LOGON_HOURS_DEFAULT),
- 							(const char *)pdb_get_hours(newpwd));
- 	}
+	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_HOURS)) {
+		some_field_affected = 1;
+		pdb_sql_string_field(query,
+				config_value_write(location,
+					"logon hours column",
+					CONFIG_LOGON_HOURS_DEFAULT),
+				(const char *)pdb_get_hours(newpwd));
+	}
 
- 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PWHISTORY)) {
+	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PWHISTORY)) {
 		uint32 pw_history_len = 0;
 		uint32 max_history_len = 0;
 		int i;
 		const uint8 *pwhist;
-		
+
 		pwhist = pdb_get_pw_history(newpwd, &pw_history_len);
-		
+
 #if PASSDB_INTERFACE_VERSION < 19
 		pdb_get_account_policy(AP_PASSWORD_HISTORY, &max_history_len);
 #else
 		pdb_get_account_policy(PDB_POLICY_PASSWORD_HISTORY, &pw_history_len);
 #endif
-		
+
 		some_field_affected = 1;
 		for (i = 0; i < max_history_len && i < pw_history_len; i++) {
 			pdb_sethexpwd(&temp[i*64], &pwhist[i*PW_HISTORY_ENTRY_LEN], 0);
 			pdb_sethexpwd(&temp[i*64+32],
-					&pwhist[(i*PW_HISTORY_ENTRY_LEN)+PW_HISTORY_SALT_LEN], 0);		
- 		}
- 		pdb_sql_string_field(query,
- 							config_value_write(location,
- 											   "password history column",
- 											   CONFIG_PASSWORD_HISTORY_DEFAULT),
- 							temp);
- 	}
+					&pwhist[(i*PW_HISTORY_ENTRY_LEN)+PW_HISTORY_SALT_LEN], 0);
+		}
+		pdb_sql_string_field(query,
+				config_value_write(location,
+					"password history column",
+					CONFIG_PASSWORD_HISTORY_DEFAULT),
+				temp);
+	}
 
- 	if (!some_field_affected) {
+	if (!some_field_affected) {
 		talloc_free(query);
- 		return NULL;
- 	}
+		return NULL;
+	}
 
 	if (query->update) {
 		query->part1[strlen(query->part1) - 1] = '\0';
 		query->part1 = talloc_asprintf(
 			mem_ctx, "%s WHERE %s = '%s'", query->part1,
 			config_value_read(location,
-					  "user sid column",
-					  CONFIG_USER_SID_DEFAULT),
+					"user sid column",
+					CONFIG_USER_SID_DEFAULT),
 			sid_to_fstring(sid_str, pdb_get_user_sid (newpwd)));
 	} else {
 		query->part2[strlen(query->part2) - 1] = ')';
 		query->part1[strlen(query->part1) - 1] = ')';
 		query->part1 =
 			talloc_asprintf_append(query->part1,
-								   " VALUES (%s", query->part2);
+								" VALUES (%s", query->part2);
 	}
 
 	ret = talloc_strdup(mem_ctx, query->part1);
@@ -601,14 +601,14 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 bool sql_account_config_valid(const char *data)
 {
 	const char *sid_column, *username_column;
-	
-    sid_column = config_value_read(data, "user sid column", CONFIG_USER_SID_DEFAULT);
-    username_column = config_value_read(data, "username column", CONFIG_USERNAME_DEFAULT);
-	
-    if(!strcmp(sid_column,"NULL") || !strcmp(username_column, "NULL")) {
-        DEBUG(0,("Please specify both a valid 'user sid column' and a valid 'username column' in smb.conf\n"));
-        return false;
-    }
+
+	sid_column = config_value_read(data, "user sid column", CONFIG_USER_SID_DEFAULT);
+	username_column = config_value_read(data, "username column", CONFIG_USERNAME_DEFAULT);
+
+	if(!strcmp(sid_column,"NULL") || !strcmp(username_column, "NULL")) {
+		DEBUG(0,("Please specify both a valid 'user sid column' and a valid 'username column' in smb.conf\n"));
+		return false;
+	}
 
 	return true;
 }
