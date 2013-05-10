@@ -536,6 +536,8 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 					CONFIG_NT_PW_DEFAULT), temp);
 	}
 
+/* FIXME This currently gives an error about encoding in postgres. Fix it */
+#if 0
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_HOURS)) {
 		some_field_affected = 1;
 		pdb_sql_string_field(query,
@@ -544,6 +546,7 @@ char *sql_account_query_update(TALLOC_CTX *mem_ctx, const char *location, struct
 					CONFIG_LOGON_HOURS_DEFAULT),
 				(const char *)pdb_get_hours(newpwd));
 	}
+#endif
 
 	if (!isupdate || IS_SAM_CHANGED(newpwd, PDB_PWHISTORY)) {
 		uint32 pw_history_len = 0;

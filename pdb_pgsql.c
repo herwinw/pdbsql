@@ -145,10 +145,13 @@ static PGresult *pdb_pgsql_query(struct pdb_pgsql_data *data, char *query)
 		/* Will happen mostly because the server has been disconnected */
 		DEBUG(1, ("Error executing %s, %s (trying to recover with reconnect)\n", query, PQerrorMessage(data->handle)));
 		PQreset(data->handle);
-	} else if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-		DEBUG(1, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
-		PQclear(result);
-		result = NULL;
+	} else {
+		int status = PQresultStatus(result);
+		if (status != PGRES_TUPLES_OK && status != PGRES_COMMAND_OK) {
+			DEBUG(1, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
+			PQclear(result);
+			result = NULL;
+		}
 	}
 
 	return result;
@@ -449,13 +452,9 @@ static bool pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods)
 #else
 static uint32_t pgsqlsam_capabilities(struct pdb_methods *pdb_methods)
 {
-	return PDB_CAP_STORE_RIDS | PDB_CAP_ADS;
+	return PDB_CAP_ADS;
 }
 #endif
-static bool pgsqlsam_new_rid(struct pdb_methods *pdb_methods, uint32 *rid)
-{
-	return false;
-}
 
 /* Iterate through search results, if a new entry is available: store in
  * entry and return true. Otherwise: return false
@@ -604,7 +603,6 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 #else
 	(*pdb_method)->capabilities       = pgsqlsam_capabilities;
 #endif
-	(*pdb_method)->new_rid            = pgsqlsam_new_rid;
 
 	data = talloc(*pdb_method, struct pdb_pgsql_data);
 	(*pdb_method)->private_data = data;
