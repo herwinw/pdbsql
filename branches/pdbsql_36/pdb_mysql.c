@@ -517,6 +517,23 @@ static bool mysqlsam_search_users(struct pdb_methods *methods,
 	return true;
 }
 
+/* Dummy search_ functions.  Maybe they should really work XXXX */
+/* Courtesy of Gary Mills */
+static bool mysqlsam_search_groups(struct pdb_methods *methods,
+				   struct pdb_search *search)
+{
+	talloc_set_destructor(search, NULL);
+	return false;
+}
+
+static bool mysqlsam_search_aliases(struct pdb_methods *methods,
+				     struct pdb_search *search,
+				    const struct dom_sid *sid)
+{
+	talloc_set_destructor(search, NULL);
+	return false;
+}
+
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
@@ -535,6 +552,8 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->name = "mysqlsam";
 
 	(*pdb_method)->search_users = mysqlsam_search_users;
+	(*pdb_method)->search_groups = mysqlsam_search_groups;
+	(*pdb_method)->search_aliases = mysqlsam_search_aliases;
 	(*pdb_method)->getsampwnam = mysqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid = mysqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
