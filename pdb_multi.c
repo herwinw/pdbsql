@@ -164,10 +164,10 @@ static bool multisam_new_rid(struct pdb_methods *methods,
 	return true;
 }
 
-#if 0
 static bool multisam_search_groups(struct pdb_methods *methods,
 		struct pdb_search *search)
 {
+	talloc_set_destructor(search, NULL);
 	return false;
 }
 
@@ -175,16 +175,17 @@ static bool multisam_search_aliases(struct pdb_methods *methods,
 		struct pdb_search *search,
 		const struct dom_sid *sid)
 {
+	talloc_set_destructor(search, NULL);
 	return false;
 }
 
-static NTSTATUS multisam_get_account_policy(struct pdb_methods *methods, int policy_index, uint32 *value)
+static NTSTATUS multisam_get_account_policy(struct pdb_methods *methods, enum pdb_policy_type type, uint32 *value)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS multisam_set_account_policy(struct pdb_methods *methods, int policy_index, uint32 value)
+static NTSTATUS multisam_set_account_policy(struct pdb_methods *methods, enum pdb_policy_type type, uint32 value)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
@@ -195,7 +196,6 @@ static NTSTATUS multisam_get_seq_num(struct pdb_methods *methods, time_t *seq_nu
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
-#endif
 
 /* Tries gid_to_sid on every backend until one succeeds, returns true on success */
 static bool multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
@@ -242,16 +242,6 @@ static bool multisam_sid_to_id(struct pdb_methods *methods,
 	return false;
 }
 
-#if 0
-static NTSTATUS multisam_set_unix_primary_group(struct pdb_methods *methods,
-		TALLOC_CTX *mem_ctx,
-		struct samu *sampass)
-{
-	DEBUG(1, ("This function is not implemented yet\n"));
-	return NT_STATUS_NOT_IMPLEMENTED;
-}
-#endif
-
 static NTSTATUS multisam_create_user(struct pdb_methods *methods,
 					TALLOC_CTX *tmp_ctx, const char *name,
 					uint32 acb_info, uint32 *rid)
@@ -291,7 +281,6 @@ static NTSTATUS multisam_delete_user(struct pdb_methods *methods,
 	return NT_STATUS_UNSUCCESSFUL;
 }
 
-#if 0
 static NTSTATUS multisam_enum_group_memberships(struct pdb_methods *methods,
 		TALLOC_CTX *mem_ctx,
 		struct samu *user,
@@ -350,7 +339,6 @@ static NTSTATUS multisam_getgrnam(struct pdb_methods *methods, GROUP_MAP *map,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
-#endif
 
 static NTSTATUS multisam_add_group_mapping_entry(struct pdb_methods *methods,
 						GROUP_MAP *map)
@@ -410,9 +398,8 @@ static NTSTATUS multisam_delete_group_mapping_entry(struct pdb_methods *methods,
 	return NT_STATUS_UNSUCCESSFUL;
 }
 
-#if 0
 static NTSTATUS multisam_enum_group_mapping(struct pdb_methods *methods,
-		const struct dom_sid *sid, enum SID_NAME_USE sid_name_use,
+		const struct dom_sid *sid, enum lsa_SidType sid_name_use,
 		GROUP_MAP **pp_rmap, size_t *p_num_entries,
 		bool unix_only)
 {
@@ -420,12 +407,14 @@ static NTSTATUS multisam_enum_group_mapping(struct pdb_methods *methods,
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
 
+#if 0
 static NTSTATUS multisam_find_alias(struct pdb_methods *methods,
 				const char *name, struct dom_sid *sid)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
+#endif
 
 static NTSTATUS multisam_create_alias(struct pdb_methods *methods,
 		const char *name, uint32 *rid)
@@ -472,8 +461,8 @@ static NTSTATUS multisam_del_aliasmem(struct pdb_methods *methods,
 }
 
 NTSTATUS multisam_enum_aliasmem(struct pdb_methods *methods,
-		const struct dom_sid *alias, struct dom_sid **pp_members,
-		size_t *p_num_members)
+		const struct dom_sid *alias, TALLOC_CTX *mem_ctx,
+		struct dom_sid **pp_members, size_t *p_num_members)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
@@ -490,10 +479,9 @@ static NTSTATUS multisam_alias_memberships(struct pdb_methods *methods,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
-#endif
 
-#if 0
 /* Creates user list in every backend */
+#if 0
 static NTSTATUS multisam_setsampwent(struct pdb_methods *methods, bool update, uint32 acb_mask)
 {
 	short i;
@@ -672,7 +660,6 @@ static NTSTATUS multisam_rename_sam_account (struct pdb_methods *methods, struct
 }
 
 
-#if 0
 static NTSTATUS multisam_lookup_rids(struct pdb_methods *methods,
 		const struct dom_sid *domain_sid,
 		int num_rids,
@@ -709,7 +696,6 @@ static NTSTATUS multisam_del_groupmem(struct pdb_methods *methods,
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
 }
-#endif
 
 /* The capabilities of the first backend is used. */
 /* FIXME This should combine the capabilities from all the backends */
@@ -773,8 +759,6 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->sid_to_id = multisam_sid_to_id;
 
 
-	/* Not yet implemented here */
-#if 0
 	(*pdb_method)->update_login_attempts = multisam_update_login_attempts;
 	(*pdb_method)->getgrsid = multisam_getgrsid;
 	(*pdb_method)->getgrgid = multisam_getgrgid;
@@ -786,7 +770,6 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->enum_group_memberships = multisam_enum_group_memberships;
 	(*pdb_method)->add_groupmem = multisam_add_groupmem;
 	(*pdb_method)->del_groupmem = multisam_del_groupmem;
-	(*pdb_method)->find_alias = multisam_find_alias;
 	(*pdb_method)->create_alias = multisam_create_alias;
 	(*pdb_method)->delete_alias = multisam_delete_alias;
 	(*pdb_method)->get_aliasinfo = multisam_get_aliasinfo;
@@ -802,6 +785,9 @@ static NTSTATUS multisam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->search_users = multisam_search_users;
 	(*pdb_method)->search_groups = multisam_search_groups;
 	(*pdb_method)->search_aliases = multisam_search_aliases;
+	/* Not yet implemented here */
+#if 0
+	(*pdb_method)->find_alias = multisam_find_alias;
 #endif
 
 	if (!location) {
