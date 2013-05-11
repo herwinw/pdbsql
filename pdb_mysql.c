@@ -408,11 +408,7 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 }
 
 static uint32_t mysqlsam_capabilities (struct pdb_methods *pdb_methods) {
-	return PDB_CAP_STORE_RIDS | PDB_CAP_ADS;
-}
-
-static bool mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
-	return false;
+	return PDB_CAP_ADS;
 }
 
 struct mysqlsam_search_state {
@@ -560,7 +556,6 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
 	(*pdb_method)->capabilities = mysqlsam_capabilities;
-	(*pdb_method)->new_rid = mysqlsam_new_rid;
 
 	data = talloc(*pdb_method, struct pdb_mysql_data);
 	(*pdb_method)->private_data = data;
