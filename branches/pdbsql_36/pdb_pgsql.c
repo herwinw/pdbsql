@@ -444,17 +444,10 @@ static NTSTATUS pgsqlsam_update_sam_account(struct pdb_methods *methods, struct 
 	return pgsqlsam_replace_sam_account(methods, newpwd, 1);
 }
 
-#if PASSDB_INTERFACE_VERSION < 19
-static bool pgsqlsam_rid_algorithm(struct pdb_methods *pdb_methods)
-{
-	return true;
-}
-#else
 static uint32_t pgsqlsam_capabilities(struct pdb_methods *pdb_methods)
 {
 	return PDB_CAP_ADS;
 }
-#endif
 
 /* Iterate through search results, if a new entry is available: store in
  * entry and return true. Otherwise: return false
@@ -598,11 +591,7 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = pgsqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
-#if PASSDB_INTERFACE_VERSION < 19
-	(*pdb_method)->rid_algorithm      = pgsqlsam_rid_algorithm;
-#else
 	(*pdb_method)->capabilities       = pgsqlsam_capabilities;
-#endif
 
 	data = talloc(*pdb_method, struct pdb_pgsql_data);
 	(*pdb_method)->private_data = data;

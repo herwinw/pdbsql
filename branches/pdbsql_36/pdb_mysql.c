@@ -407,15 +407,10 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 	return mysqlsam_replace_sam_account(methods, newpwd, 1);
 }
 
-#if PASSDB_INTERFACE_VERSION < 19
-static bool mysqlsam_rid_algorithm (struct pdb_methods *pdb_methods) {
-	return true;
-}
-#else
 static uint32_t mysqlsam_capabilities (struct pdb_methods *pdb_methods) {
 	return PDB_CAP_STORE_RIDS | PDB_CAP_ADS;
 }
-#endif
+
 static bool mysqlsam_new_rid (struct pdb_methods *pdb_methods, uint32 *rid) {
 	return false;
 }
@@ -545,11 +540,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
-#if PASSDB_INTERFACE_VERSION < 19
-	(*pdb_method)->rid_algorithm = mysqlsam_rid_algorithm;
-#else
 	(*pdb_method)->capabilities = mysqlsam_capabilities;
-#endif
 	(*pdb_method)->new_rid = mysqlsam_new_rid;
 
 	data = talloc(*pdb_method, struct pdb_mysql_data);
