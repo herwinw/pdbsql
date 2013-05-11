@@ -564,6 +564,24 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	return true;
 }
 
+/* Dummy search_ functions.  Maybe they should really work XXXX */
+/* Courtesy of Gary Mills */
+static bool pgsqlsam_search_groups(struct pdb_methods *methods,
+				   struct pdb_search *search)
+{
+	talloc_set_destructor(search, NULL);
+	return false;
+}
+
+static bool pgsqlsam_search_aliases(struct pdb_methods *methods,
+				     struct pdb_search *search,
+				    const struct dom_sid *sid)
+{
+	talloc_set_destructor(search, NULL);
+	return false;
+}
+
+
 static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
@@ -585,6 +603,8 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	(*pdb_method)->name               = "pgsqlsam";
 
 	(*pdb_method)->search_users       = pgsqlsam_search_users;
+	(*pdb_method)->search_groups      = pgsqlsam_search_groups;
+	(*pdb_method)->search_aliases     = pgsqlsam_search_aliases;
 	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
