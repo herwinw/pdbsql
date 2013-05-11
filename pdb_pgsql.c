@@ -121,7 +121,7 @@ static PGconn *pgsqlsam_connect(struct pdb_pgsql_data *data)
 	return handle;
 }
 
-static PGresult *pdb_pgsql_query(struct pdb_pgsql_data *data, char *query)
+static PGresult *pdb_pgsql_query(struct pdb_pgsql_data *data, char *query, bool expect_resultset)
 {
 	PGresult *result;
 
@@ -146,8 +146,7 @@ static PGresult *pdb_pgsql_query(struct pdb_pgsql_data *data, char *query)
 		DEBUG(1, ("Error executing %s, %s (trying to recover with reconnect)\n", query, PQerrorMessage(data->handle)));
 		PQreset(data->handle);
 	} else {
-		int status = PQresultStatus(result);
-		if (status != PGRES_TUPLES_OK && status != PGRES_COMMAND_OK) {
+		if (PQresultStatus(result) != (expect_resultset ? PGRES_TUPLES_OK : PGRES_COMMAND_OK)) {
 			DEBUG(1, ("Error executing %s, %s\n", query, PQresultErrorMessage(result)));
 			PQclear(result);
 			result = NULL;
@@ -282,7 +281,7 @@ static NTSTATUS pgsqlsam_select_by_field(struct pdb_methods *methods, struct sam
 	PQescapeString(esc, sname, strlen(sname));
 
 	query = sql_account_query_select(NULL, data->location, true, field, esc);
-	result = pdb_pgsql_query(data, query);
+	result = pdb_pgsql_query(data, query, true);
 
 	/* Result? */
 	if (result == NULL)
@@ -379,7 +378,7 @@ static NTSTATUS pgsqlsam_delete_sam_account(struct pdb_methods *methods, struct 
 	PQescapeString(esc, sname, strlen(sname));
 
 	query = sql_account_query_delete(NULL, data->location, esc);
-	result = pdb_pgsql_query(data, query);
+	result = pdb_pgsql_query(data, query, false);
 
 	if (result == NULL) {
 		retval = NT_STATUS_UNSUCCESSFUL;
@@ -421,7 +420,7 @@ static NTSTATUS pgsqlsam_replace_sam_account(struct pdb_methods *methods, struct
 	}
 
 	/* Execute the query */
-	result = pdb_pgsql_query(data, query);
+	result = pdb_pgsql_query(data, query, false);
 
 	if (result == NULL) {
 		retval = NT_STATUS_INVALID_PARAMETER;
@@ -548,7 +547,7 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	/* The query to select all the users */
 	query = sql_account_query_select(NULL, data->location, false, SQL_SEARCH_NONE, NULL);
 
-	search_state->pwent = pdb_pgsql_query(data, query);
+	search_state->pwent = pdb_pgsql_query(data, query, true);
 	search_state->currow = 0;
 	talloc_free(query);
 
