@@ -286,7 +286,7 @@ static NTSTATUS multisam_enum_group_memberships(struct pdb_methods *methods,
 		struct samu *user,
 		struct dom_sid **pp_sids,
 		gid_t **pp_gids,
-		size_t *p_num_groups)
+		uint32_t *p_num_groups)
 {
 	DEBUG(1, ("This function is not implemented yet\n"));
 	return NT_STATUS_NOT_IMPLEMENTED;
