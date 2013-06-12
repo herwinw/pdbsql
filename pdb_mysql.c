@@ -445,7 +445,7 @@ static bool mysqlsam_search_next_entry(struct pdb_search *search,
 
 	state->current += 1;
 
-	if ((entry->account_name == NULL)) {
+	if (entry->account_name == NULL) {
 		DEBUG(0, ("talloc_strdup failed\n"));
 		return false;
 	}
