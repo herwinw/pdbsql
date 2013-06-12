@@ -489,7 +489,7 @@ static bool pgsqlsam_search_next_entry(struct pdb_search *search,
 
 	search_state->currow++;
 
-	if ((entry->account_name == NULL)) {
+	if (entry->account_name == NULL) {
 		DEBUG(0, ("talloc_strdup failed\n"));
 		return false;
 	}
