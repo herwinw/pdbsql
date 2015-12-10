@@ -635,7 +635,12 @@ static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *loca
 	(*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
 	(*pdb_method)->capabilities       = pgsqlsam_capabilities;
 
-	data = talloc(*pdb_method, struct pdb_pgsql_data);
+	if (!(data = TALLOC_ZERO_P(*pdb_method, struct pdb_pgsql_data)))
+	{
+		DEBUG(0, ("talloc() failed for pdbsql private_data!\n"));
+		return NT_STATUS_NO_MEMORY;
+	}
+
 	(*pdb_method)->private_data = data;
 
 	data->handle = NULL;

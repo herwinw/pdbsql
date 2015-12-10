@@ -579,7 +579,12 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
 	(*pdb_method)->capabilities = mysqlsam_capabilities;
 
-	data = talloc(*pdb_method, struct pdb_mysql_data);
+	if (!(data = TALLOC_ZERO_P(*pdb_method, struct pdb_mysql_data)))
+	{
+		DEBUG(0, ("talloc() failed for pdbsql private_data!\n"));
+		return NT_STATUS_NO_MEMORY;
+	}
+
 	(*pdb_method)->private_data = data;
 	data->handle = NULL;
 	data->pwent = NULL;
