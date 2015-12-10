@@ -120,7 +120,7 @@ static bool pdb_mysql_query(struct pdb_mysql_data *data, char *query, int *mysql
 	return true;
 }
 
-static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
+static NTSTATUS row_to_sam_account(MYSQL_RES *r, struct samu *u)
 {
 	MYSQL_ROW row;
 	unsigned char pwd[16];
@@ -196,7 +196,7 @@ static NTSTATUS row_to_sam_account(MYSQL_RES * r, struct samu * u)
 	return NT_STATUS_OK;
 }
 
-static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct samu * user,
+static NTSTATUS mysqlsam_select_by_field(struct pdb_methods *methods, struct samu *user,
 						enum sql_search_field field, const char *sname)
 {
 	char *esc_sname;
@@ -261,7 +261,7 @@ static NTSTATUS mysqlsam_select_by_field(struct pdb_methods * methods, struct sa
   Lookup a name in the SAM database
  ******************************************************************/
 
-static NTSTATUS mysqlsam_getsampwnam(struct pdb_methods *methods, struct samu * user,
+static NTSTATUS mysqlsam_getsampwnam(struct pdb_methods *methods, struct samu *user,
 					const char *sname)
 {
 	struct pdb_mysql_data *data;
@@ -282,8 +282,8 @@ static NTSTATUS mysqlsam_getsampwnam(struct pdb_methods *methods, struct samu * 
   Search by sid
  **************************************************************************/
 
-static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu * user,
-					const struct dom_sid * sid)
+static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu *user,
+					const struct dom_sid *sid)
 {
 	struct pdb_mysql_data *data;
 	fstring sid_str;
@@ -301,7 +301,7 @@ static NTSTATUS mysqlsam_getsampwsid(struct pdb_methods *methods, struct samu * 
  ****************************************************************************/
 
 static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
-							struct samu * sam_pass)
+							struct samu *sam_pass)
 {
 	const char *sname = pdb_get_username(sam_pass);
 	char *esc;
@@ -363,7 +363,7 @@ static NTSTATUS mysqlsam_delete_sam_account(struct pdb_methods *methods,
 }
 
 static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
-							struct samu * newpwd, char isupdate)
+							struct samu *newpwd, char isupdate)
 {
 	struct pdb_mysql_data *data;
 	char *query;
@@ -396,13 +396,13 @@ static NTSTATUS mysqlsam_replace_sam_account(struct pdb_methods *methods,
 	return NT_STATUS_OK;
 }
 
-static NTSTATUS mysqlsam_add_sam_account(struct pdb_methods *methods, struct samu * newpwd)
+static NTSTATUS mysqlsam_add_sam_account(struct pdb_methods *methods, struct samu *newpwd)
 {
 	return mysqlsam_replace_sam_account(methods, newpwd, 0);
 }
 
 static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
-							struct samu * newpwd)
+							struct samu *newpwd)
 {
 	return mysqlsam_replace_sam_account(methods, newpwd, 1);
 }
