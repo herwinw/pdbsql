@@ -407,6 +407,27 @@ static NTSTATUS mysqlsam_update_sam_account(struct pdb_methods *methods,
 	return mysqlsam_replace_sam_account(methods, newpwd, 1);
 }
 
+static NTSTATUS mysqlsam_rename_sam_account(struct pdb_methods *methods,
+                struct samu *old_acct,
+                const char *newname)
+{
+	struct samu *newpwd;
+	NTSTATUS res;
+	newpwd = talloc_memdup(NULL, old_acct, sizeof(struct samu));
+	if (newpwd == NULL) {
+		DEBUG(0, ("Can't allocate memory to store new user\n"));
+		return NT_STATUS_NO_MEMORY;
+	}
+	if (!pdb_set_username(newpwd, newname, PDB_SET)) {
+		DEBUG(1, ("Unable to change username\n"));
+		res = NT_STATUS_UNSUCCESSFUL;
+	} else {
+		res = mysqlsam_replace_sam_account(methods, newpwd, 1);
+	}
+	talloc_free(newpwd);
+	return res;
+}
+
 static uint32_t mysqlsam_capabilities (struct pdb_methods *pdb_methods) {
 	return PDB_CAP_ADS;
 }
@@ -554,6 +575,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	(*pdb_method)->getsampwsid = mysqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
+	(*pdb_method)->rename_sam_account = mysqlsam_rename_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
 	(*pdb_method)->capabilities = mysqlsam_capabilities;
 
