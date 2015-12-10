@@ -76,7 +76,7 @@ static NTSTATUS pdb_mysql_connect(struct pdb_mysql_data *data) {
 			config_value(data, "mysql user", CONFIG_USER_DEFAULT),
 			config_value(data, "mysql password", CONFIG_PASS_DEFAULT),
 			config_value(data, "mysql database", CONFIG_DB_DEFAULT),
-			xatol(config_value (data, "mysql port", CONFIG_PORT_DEFAULT)),
+			xatol(config_value(data, "mysql port", CONFIG_PORT_DEFAULT)),
 			NULL, 0)) {
 		DEBUG(0,
 				("Failed to connect to mysql database: error: %s\n",
@@ -428,7 +428,8 @@ static NTSTATUS mysqlsam_rename_sam_account(struct pdb_methods *methods,
 	return res;
 }
 
-static uint32_t mysqlsam_capabilities (struct pdb_methods *pdb_methods) {
+static uint32_t mysqlsam_capabilities(struct pdb_methods *pdb_methods)
+{
 	return PDB_CAP_ADS;
 }
 

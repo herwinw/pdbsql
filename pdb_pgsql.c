@@ -202,7 +202,7 @@ static NTSTATUS row_to_sam_account (PGresult *r, long row, struct samu *u)
 	pdb_set_logon_count          (u, PQgetlong (r, row, 27), PDB_SET);
 	pdb_set_unknown_6            (u, PQgetlong (r, row, 28), PDB_SET);
 
-	hours = (unsigned char *) PQgetvalue (r, row,  29);
+	hours = (unsigned char *) PQgetvalue(r, row,  29);
 	if (hours != NULL) {
 		hours = PQunescapeBytea(hours, &hours_len);
 		if (hours_len > 0) {
@@ -604,7 +604,7 @@ static bool pgsqlsam_search_aliases(struct pdb_methods *methods,
 }
 
 
-static NTSTATUS pgsqlsam_init (struct pdb_methods **pdb_method, const char *location)
+static NTSTATUS pgsqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
 
