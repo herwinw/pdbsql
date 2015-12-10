@@ -591,6 +591,7 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 		return NT_STATUS_UNSUCCESSFUL;
 	}
 
+	DEBUG(5, ("Mysql module initialized\n"));
 	return NT_STATUS_OK;
 }
 
