@@ -467,7 +467,7 @@ static NTSTATUS pgsqlsam_rename_sam_account(struct pdb_methods *methods,
 
 static uint32_t pgsqlsam_capabilities(struct pdb_methods *pdb_methods)
 {
-	return PDB_CAP_ADS;
+	return 0;
 }
 
 /* Iterate through search results, if a new entry is available: store in
@@ -586,23 +586,6 @@ static bool pgsqlsam_search_users(struct pdb_methods *pdb_methods,
 	return true;
 }
 
-/* Dummy search_ functions.  Maybe they should really work XXXX */
-/* Courtesy of Gary Mills */
-static bool pgsqlsam_search_groups(struct pdb_methods *methods,
-				   struct pdb_search *search)
-{
-	talloc_set_destructor(search, NULL);
-	return false;
-}
-
-static bool pgsqlsam_search_aliases(struct pdb_methods *methods,
-				     struct pdb_search *search,
-				    const struct dom_sid *sid)
-{
-	talloc_set_destructor(search, NULL);
-	return false;
-}
-
 static void pgsqlsam_free_private_data(void **vp)
 {
 	struct pdb_pgsql_data **data = (struct pdb_pgsql_data**)vp;
@@ -631,15 +614,14 @@ static NTSTATUS pgsqlsam_init(struct pdb_methods **pdb_method, const char *locat
 
 	(*pdb_method)->name               = "pgsqlsam";
 
-	(*pdb_method)->search_users       = pgsqlsam_search_users;
-	(*pdb_method)->search_groups      = pgsqlsam_search_groups;
-	(*pdb_method)->search_aliases     = pgsqlsam_search_aliases;
 	(*pdb_method)->getsampwnam        = pgsqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid        = pgsqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account    = pgsqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = pgsqlsam_update_sam_account;
-	(*pdb_method)->rename_sam_account = pgsqlsam_rename_sam_account;
 	(*pdb_method)->delete_sam_account = pgsqlsam_delete_sam_account;
+	(*pdb_method)->rename_sam_account = pgsqlsam_rename_sam_account;
+	(*pdb_method)->search_users       = pgsqlsam_search_users;
+
 	(*pdb_method)->capabilities       = pgsqlsam_capabilities;
 
 	if (!(data = TALLOC_ZERO_P(*pdb_method, struct pdb_pgsql_data)))

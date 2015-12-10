@@ -430,7 +430,7 @@ static NTSTATUS mysqlsam_rename_sam_account(struct pdb_methods *methods,
 
 static uint32_t mysqlsam_capabilities(struct pdb_methods *pdb_methods)
 {
-	return PDB_CAP_ADS;
+	return 0;
 }
 
 struct mysqlsam_search_state {
@@ -535,23 +535,6 @@ static bool mysqlsam_search_users(struct pdb_methods *methods,
 	return true;
 }
 
-/* Dummy search_ functions.  Maybe they should really work XXXX */
-/* Courtesy of Gary Mills */
-static bool mysqlsam_search_groups(struct pdb_methods *methods,
-				   struct pdb_search *search)
-{
-	talloc_set_destructor(search, NULL);
-	return false;
-}
-
-static bool mysqlsam_search_aliases(struct pdb_methods *methods,
-				     struct pdb_search *search,
-				    const struct dom_sid *sid)
-{
-	talloc_set_destructor(search, NULL);
-	return false;
-}
-
 static void mysqlsam_free_private_data(void **vp)
 {
 	struct pdb_mysql_data **data = (struct pdb_mysql_data**)vp;
@@ -577,15 +560,14 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 
 	(*pdb_method)->name = "mysqlsam";
 
-	(*pdb_method)->search_users = mysqlsam_search_users;
-	(*pdb_method)->search_groups = mysqlsam_search_groups;
-	(*pdb_method)->search_aliases = mysqlsam_search_aliases;
 	(*pdb_method)->getsampwnam = mysqlsam_getsampwnam;
 	(*pdb_method)->getsampwsid = mysqlsam_getsampwsid;
 	(*pdb_method)->add_sam_account = mysqlsam_add_sam_account;
 	(*pdb_method)->update_sam_account = mysqlsam_update_sam_account;
-	(*pdb_method)->rename_sam_account = mysqlsam_rename_sam_account;
 	(*pdb_method)->delete_sam_account = mysqlsam_delete_sam_account;
+	(*pdb_method)->rename_sam_account = mysqlsam_rename_sam_account;
+	(*pdb_method)->search_users = mysqlsam_search_users;
+
 	(*pdb_method)->capabilities = mysqlsam_capabilities;
 
 	if (!(data = TALLOC_ZERO_P(*pdb_method, struct pdb_mysql_data)))
