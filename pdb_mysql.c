@@ -598,8 +598,3 @@ NTSTATUS init_samba_module(void)
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "mysql", mysqlsam_init);
 }
-
-NTSTATUS init_module(void)
-{
-	return init_samba_module();
-}

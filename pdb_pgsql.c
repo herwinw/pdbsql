@@ -650,10 +650,3 @@ NTSTATUS init_samba_module(void)
 {
 	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "pgsql", pgsqlsam_init);
 }
-
-/* For backwards compatibility with either 3.2.0~r2 or Debian */
-NTSTATUS init_module(void)
-{
-	return init_samba_module();
-}
-
