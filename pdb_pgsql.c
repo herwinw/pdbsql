@@ -603,6 +603,13 @@ static bool pgsqlsam_search_aliases(struct pdb_methods *methods,
 	return false;
 }
 
+static void pgsqlsam_free_private_data(void **vp)
+{
+	struct pdb_pgsql_data **data = (struct pdb_pgsql_data**)vp;
+
+	*data = NULL;
+	/* No need to free any further, as it is talloc()ed */
+}
 
 static NTSTATUS pgsqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
@@ -642,6 +649,7 @@ static NTSTATUS pgsqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	}
 
 	(*pdb_method)->private_data = data;
+	(*pdb_method)->free_private_data = pgsqlsam_free_private_data;
 
 	data->handle = NULL;
 	data->pwent  = NULL;

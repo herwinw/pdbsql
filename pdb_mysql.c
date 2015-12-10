@@ -552,6 +552,14 @@ static bool mysqlsam_search_aliases(struct pdb_methods *methods,
 	return false;
 }
 
+static void mysqlsam_free_private_data(void **vp)
+{
+	struct pdb_mysql_data **data = (struct pdb_mysql_data**)vp;
+
+	*data = NULL;
+	/* No need to free any further, as it is talloc()ed */
+}
+
 static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *location)
 {
 	NTSTATUS nt_status;
@@ -587,6 +595,8 @@ static NTSTATUS mysqlsam_init(struct pdb_methods **pdb_method, const char *locat
 	}
 
 	(*pdb_method)->private_data = data;
+	(*pdb_method)->free_private_data = mysqlsam_free_private_data;
+
 	data->handle = NULL;
 	data->pwent = NULL;
 
