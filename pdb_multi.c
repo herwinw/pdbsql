@@ -203,15 +203,13 @@ static bool multisam_gid_to_sid(struct pdb_methods *methods, gid_t gid,
 {
 	short i;
 	struct multisam_data *data;
-	bool rv;
 
 	if (!methods) return false;
 	data = (struct multisam_data *)methods->private_data;
 	if (!data) return false;
 
 	for (i = 0; i < data->num_backends; i++) {
-		rv = data->methods[i]->gid_to_sid(data->methods[i], gid, sid);
-		if (rv == true) {
+		if (data->methods[i]->gid_to_sid(data->methods[i], gid, sid)) {
 			return true;
 		}
 	}
@@ -226,15 +224,13 @@ static bool multisam_sid_to_id(struct pdb_methods *methods,
 {
 	short i;
 	struct multisam_data *data;
-	bool rv;
 
 	if (!methods) return false;
 	data = (struct multisam_data *)methods->private_data;
 	if (!data) return false;
 
 	for (i = 0; i < data->num_backends; i++) {
-		rv = data->methods[i]->sid_to_id(data->methods[i], sid, id, type);
-		if (rv == true) {
+		if (data->methods[i]->sid_to_id(data->methods[i], sid, id, type)) {
 			return true;
 		}
 	}
