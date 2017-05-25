@@ -135,7 +135,7 @@ static NTSTATUS pdb_sql_string_field(struct pdb_sql_query *q,
 
 static const char * config_value_write(const char *location, const char *name, const char *default_value)
 {
-	char const *v = NULL;
+	char const *v;
 	char const *swrite = NULL;
 
 	v = lp_parm_const_string(GLOBAL_SECTION_SNUM, location, name, default_value);
@@ -167,7 +167,7 @@ static const char * config_value_write(const char *location, const char *name, c
 
 static const char * config_value_read(const char *location, const char *name, const char *default_value)
 {
-	char *v = NULL;
+	char *v;
 	char *swrite;
 
 	v = lp_parm_talloc_string(GLOBAL_SECTION_SNUM, location, name, default_value);
